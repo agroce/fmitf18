@@ -1,0 +1,176 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{center}
+{\Large\sf\textbf{Collaboration Plan --- 
+CSR: Large: Collaborative Research:\\ \proptitle{}}}
+\end{center}
+
+
+
+%
+Each year, most of the PIs see each other at PLDI (The ACM Conference
+on Programming Language Design and Implementation) and attached
+conferences/workshops.
+%
+In practice, it is common for us to see each other more frequently
+than this, for example at program committee meetings, NSF panels,
+and at other conferences.
+%
+We will exploit these opportunities to meet whenever possible, for
+example by adding an extra day before or after an existing trip.
+%
+This is a highly cost-efficient way to talk face-to-face.
+%
+Additionally, the PIs at Utah all have offices on the same hallway and
+see each other almost daily.
+
+
+Our graduate students and our postdoc can be expected to travel less
+frequently than the PIs, and so special effort will be required to
+ensure that their efforts remain synchronized across institutions.
+%
+We propose the following:
+\begin{compactenum}
+\item
+A monthly teleconference/Skype meeting attended by all
+students and PIs.  Discussion will include status updates from each
+institution, integration status and plans, and 
+project dependences that need to be ironed out.
+\item
+Ad-hoc teleconference/Skype meetings as needed among subsets
+of the PIs and students, especially during time periods leading up to
+paper deadlines and code releases.
+\item
+An annual two- or three-day \name{} workshop, probably during
+the summer, to help ensure that the postdoc and graduate students
+remain aware of each others' progress and needs.
+%
+Most likely, we will alternate the workshop location to make it easier
+for undergraduates and peripherally involved graduate students to
+attend.
+\end{compactenum}
+%
+Allocated carefully, we believe that our travel budgets will be
+sufficient to enable these activities.
+
+
+\paragraph{Management Across Investigators and Institutions}
+%
+Management of the proposed effort will be simplified by the fact that
+three out of five PIs are at the University of Utah.
+%
+Thus, there is an obvious focal point for coordination efforts.
+%
+Our main priority, then, will be ensuring that work done at UVA and
+Pitt remains synchronized with work that is happening at Utah.
+
+
+\emph{We will exploit Lathe's modular structure to reduce dependences
+  and make it easier to manage research across investigators and
+  institutions.}
+%
+Figure~\ref{fig:newway} shows, and Section~\ref{sec:work} describes, a
+collection of parts that, together, will enable applications for
+ultra-low-power processors to be shaped to meet platform-specific
+constraints and application-specific requirements.
+%
+We believe that most of the elements of the proposed infrastructure
+can be developed and tested separately, using---when
+necessary---simulated data and other mockups of missing pieces.
+%
+For example:
+\begin{compactitem}
+\item
+Assume that Dr.~Hall and her student want to test a multi-objective
+search based on the function inlining and outlining optimizations.
+%
+However, a predictive model of the effects of these optimizations,
+that should be used to guide the search, does not yet exist.
+%
+Instead of the model, we can use real data from function inlining and
+outlining trials, suitably degraded to match the expected quality of
+the model.
+\item
+Assume that Dr.~Childers' group is working on modeling the effects
+of scratchpad allocation, but the ARMv7 backend for LLVM is not robust
+enough for serious use.
+%
+In this case, LLVM's very solid x86 backend could be used to compile
+embedded codes and Cachegrind, a highly configurable cache profiler
+and simulator built on Valgrind~\cite{Nethercote07}, used to provide
+feedback to build the model and perform initial evaluation.
+\end{compactitem}
+%
+By exploiting our closely aligned interests, our frequent in-person
+contact, and the modularity of the proposed software system, we
+believe the proposed efforts can be sufficiently synchronized.
+
+
+\paragraph{Specific roles of the project participants in all organizations
+involved}
+
+We have requested funding for one student per year for each PI and
+co-PI, in addition to one postdoctoral researcher who will reside at Utah.
+%
+In the table below, we describe six principals: the five PIs and
+the postdoc.
+%
+We have not broken out separate tasks for graduate students funded
+under the proposed grant, but rather we assume that the students and
+their faculty advisors will be closely collaborating on the research
+problems.
+%
+When multiple PIs are involved in a single effort, we indicate the
+leader in a bold font.
+
+\vskip 0.2in
+\noindent
+\begin{center}
+\begin{tabular}{l|l|l}
+\hline
+\textbf{Year} & \textbf{Subtask Description} & \textbf{Participants}\\ \hline
+\hline
+\multicolumn{3}{c}{\textsc{Application and Platform Specification}}\\ \hline
+Y1--Y2 & Metric Specification Language & \textbf{Regehr}, Might \\
+Y1 & Specifying sensor network platforms & \textbf{Regehr}, Postdoc\\ 
+Y2 & Metrics for sensor network applications & \textbf{Regehr}, Postdoc\\
+\hline
+\multicolumn{3}{c}{\textsc{Search}}\\ \hline
+Y1 & Investigate search algorithms & \textbf{Hall}\\
+Y1--Y5 & Feedback from external tools & \textbf{Childers}, Hall, Regehr, Postdoc\\ 
+Y2--Y3 & Designing effective cost functions & \textbf{Regehr}, Hall\\
+Y3--Y4 & Efficient global search & \textbf{Hall}\\
+Y4 & Parallel search & \textbf{Hall}\\
+\hline
+\multicolumn{3}{c}{\textsc{Architecture Specification}}\\ \hline
+Y1 & Specification language & \textbf{Davidson}, Might\\
+Y2 & MSP430 & \textbf{Davidson}\\
+Y3 & ARMv7 & \textbf{Davidson}\\ 
+\hline
+\multicolumn{3}{c}{\textsc{New Optimizations}}\\ \hline
+Y1-Y2 & Scratchpad allocation & \textbf{Hall}, Childers, Regehr\\
+Y2 & Outliner for LLVM & \textbf{Davidson}, Regehr\\
+Y3--Y5 & Superoptimizer & \textbf{Davidson}, Regehr, Might\\
+\hline
+\multicolumn{3}{c}{\textsc{Specifying and Modeling Optimizations}}\\ \hline
+Y1--Y3 & Labeling optimization opportunities & \textbf{Hall}, Might\\
+Y2--Y3 & Inlining and Outlining & \textbf{Childers}, Regehr\\
+Y4 & Superoptimization & \textbf{Childers}, Davidson\\
+\hline
+\multicolumn{3}{c}{\textsc{Assertion Resolution}}\\ \hline
+Y1--Y2 & High-precision pointer analysis & \textbf{Might}\\
+Y3--Y4 & Decision procedure integration & \textbf{Might}\\
+\hline
+\multicolumn{3}{c}{\textsc{LLVM Backend Development}}\\ \hline
+Y1--Y2 & MSP430 testing and enhancement & \textbf{Postdoc}\\
+Y2--Y3 & ARMv7 testing and enhancement & \textbf{Postdoc}\\
+\hline
+\multicolumn{3}{c}{\textsc{Lathe Deployment}}\\ \hline
+Y3 & Initial deployment & \textbf{Regehr}, Postdoc\\
+Y3--Y5 & Deployment evaluation and support & \textbf{Postdoc}, Regehr, Might\\
+Y5 & Second deployment & \textbf{Postdoc}, Regehr\\
+\hline
+\end{tabular}
+\end{center}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

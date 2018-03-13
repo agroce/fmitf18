@@ -1,0 +1,150 @@
+\mycomment{
+
+\section{Other Preliminary Work}
+\label{sec:prelim}
+
+\subsection{Cause Reduction and Non-Adequate Test Reduction}
+
+In previous work, we showed that delta debugging can be generalized to
+reduce tests with respect to properties other than failure
+\cite{icst14,stvrcausereduce}, and that tests reduced with respect to
+code coverage can serve as effective regression tests or seeds for
+symbolic execution \cite{stvrcausereduce,issta14}.  Moreover, we
+showed that the benefits of such reduction do not depend on 100\%
+preservation of a property, when that property is quantitative
+(e.g. coverage) rather than qualitative \cite{ASEAdeq}.  Cause
+reduction, with and without complete preservation of properties, is a
+core component of our approach to test operation, and a primary
+demonstration of our conceptual framework, where two tests that
+satisfy the same key properties are assumed to be interchangeable.
+
+\subsection{Normalization and Generalization}
+
+Normalization is the operation of rewriting a test (as always, subject
+to some causal constraint) into a restricted form.  The constraints on
+normalization are twofold:  a useful normalization must converge on a
+``simpler'' test in some sense, and the steps of normalization must
+have a low probability of drastically changing test behavior (inducing
+slippage).  The potential benefits of normalization are substantial.  First, it
+often rewrites many distinct failing tests for one fault into a single
+failing test, making it easy to find the set of distinct faults in a
+set of failing tests, a major problem in automated testing
+\cite{PLDI13}.   Second, normalized tests are often both shorter and
+include fewer features of the system under test, making them much
+easier to use for debugging.
+
+In preliminary experiments, we have produced a set of
+rewrite rules for normalization in TSTL.  For a large set of real test
+cases for real faults in the widely used SymPy Python symbolic math
+library, normalization was able to reduce the mean number of failing
+tests per fault from 12.5 tests to 3.15 tests.  The mean length and number of
+distinct API calls were reduced, compared to delta-debugging by over
+45\% and 35\%, respectively.  All results were statistically
+significant with $p < 0.005$.  Figure \ref{lengthandactions} shows the
+improvement in length and actions for the 39 SymPy faults discovered
+using TSTL.  The {\bf reduced} plots show length and actions
+statistics for tests for each fault, using only delta debugging.  The
+{\bf normalized} plots show the same values, when test normalization
+is also applied.  In addition to gains in test size and complexity
+that ease debugging, the figure also partly shows the gain for fault
+identification:  the ``boxes'' in this boxplot are typically single
+lines for normalization because normalization tends to result in a set
+of different tests exposing each fault being converted into a set of
+identical tests, hence tests having the same length and action count.
+
+\begin{figure}
+\includegraphics[width=\columnwidth]{sympyd}
+\caption{Effects of normalization on SymPy tests.}
+\label{lengthandactions}
+\end{figure}
+
+Normalization is combined with an inverse-operation, generalization,
+that summarizes the set of similar tests that also satisfy some causal
+constraint.  This lets a user have the advantage of examining a
+simplified, terse test using only small input values, without any
+disadvantage due to misleading information about the criticality of
+each aspect of the test.
+
+At this stage, however, normalization is only defined for TSTL tests,
+and has significant performance problems (it costs an order of
+magnitude more time than delta-debugging, in many cases).  As part of
+our effort to unify data and code-based tests, we propose to further
+generalize the notion of normalization and generalization, provide
+normalization facilities for key tests types such as C code (via
+C-Reduce), and improve the effectiveness and efficiency of normalization.
+
+\subsection{Avoiding Test Slippage}
+
+Formally, we define slippage as occurring whenever a test $t$ detects
+faults $F$, and the reduction $r$ of $t$ detects a different set of
+faults, $F' \neq F$.  Informally, most discussion of slippage is
+concerned with the case where
+$\exists f .  f \in F \wedge f \not\in F'$ --- that is, when slippage
+causes loss of a fault.  Slippage is usually avoided by using
+heuristics, such as that tests failing with the same error message or
+ending in the same step are due to the same fault \cite{ICSEDiff}.  In
+some cases, such as system invariant violations or compiler wrong-code
+bugs \cite{PLDI13}, such methods do not work well.  In preliminary
+work, we proposed methods \cite{slippageFSE} for avoiding slippage.
+However, these methods have serious limitations.  First, they only
+apply to the classic delta-debugging algorithm, and need to be
+generalized to apply to HDD and methods such as those used in
+C-Reduce.  Second, slippage is also a problem for normalization,
+composition, and decomposition, and the methods need to be extended to
+these areas.  
+
+
+}
+
+\section{Preliminary Work: Normalization and Generalization}
+
+After having presented a central \emph{unsolved} problem with some
+sketch of an approach, it may be useful to see the fruits of our first
+efforts to think about tests as first class entities.  In ISSTA 2017
+\cite{OneTest}, we published a paper defining and evaluating test
+normalization and generalization for Python programs tested using TSTL
+\cite{OneTest}.  The results for Python were striking:  reduction of
+the number of failing tests to examine by an order of magnitude or
+more, plus additional test size reduction beyond that provided by
+delta-debugging of 1.5x to 2x or more.  Normalization in particular is
+sufficiently valuable that it has become a standard usage in TSTL
+testing efforts for open source projects such as {\tt pyfakefs}
+\cite{pyfakefs}, where normalization has helped us identify (and the
+developers fix) more than 70 bugs over the course of a few months.
+
+
+Extending normalization to C and C++ programs would be exceptionally useful in
+``fuzzer taming'' --- triaging the bug-inducing inputs coming
+from an automated bugfinding procedure \cite{PLDI13}.
+
+Perhaps even more importantly, the ability to generalize test cases for C and C++ compilers
+would be extremely useful.
+As a specific example, we believe that nearly the entire test suites
+of GCC and LLVM could be usefully generalized to look for bugs in the
+``undefined behavior sanitizers'' --- an important new class of tool
+that inserts efficient dynamic checks for undefined behaviors (runtime
+overhead of these tools usually does not exceed 100\%).
+%
+For example, this function always executes undefined behavior, a signed
+integer overflow (even though \texttt{x} is unsigned, it becomes signed
+when it is promoted to \texttt{int}):
+
+{\scriptsize
+\begin{verbatim}
+uint16_t foo(void) {
+  uint16_t x = 65535;
+  x *= x;
+  return x;
+}
+\end{verbatim}
+}
+No version of GCC that we looked at (in the 4.6 through pre-7.0 range)
+correctly detects the undefined behavior when the
+\texttt{-fsanitize=signed-integer-overflow} option is specified.
+%
+(All recent versions of Clang/LLVM detect the problem.)
+%
+Generalizations that we plan to explore include modifying arithmetic
+operations in ways that appear to be semantically neutral --- such as
+rewriting \texttt{x + y} to be \texttt{(2 * x) + y - x} --- but that
+might introduce undefined behavior.

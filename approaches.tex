@@ -1,0 +1,231 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Using Modern Machine Learning for Effective Metrics}
+Metric learning is one of the most fundamental problems in machine
+learning. The goal of metric learning is to learn a distance function
+that is tuned according the specifics of a given task
+\cite{kulis2012metric}. While there exist some unsupervised
+approaches (e.g., principal components analysis and its probabilistic
+extensions \cite{scholkopf1998nonlinear,tipping1999probabilistic}),
+most metric learning work focuses on learning from supervised examples
+so that examples of the same class will be close to each other,
+whereas examples of different classes are far apart in the learned
+metric space.
+
+For the sake of clarity and concreteness, we will initially focus on
+linear models for metric learning in our discussion. Specifically,
+consider the following standard setup for metric learning. We are
+given a set of data points $\{x_1, x_2, ...,x_n\}$, where $x_i \in
+R^d$ and $d$ is the original dimension of the data, which can be very
+large. Our goal is to learn a Mahalanobis distance in the following
+form: \[d_A(x_i, x_j) = (x_i-x_j)^TA(x_i-x_j),\] where $A$ is a
+$d\times d$ positive semi-definite matrix (that is its eigen-values
+are non-negative), such that $d_A(x_i, x_j)$ satisfy some
+constraints. The constraints can be pairwise (specifying a pair to be
+similar or dissimilar)
+\cite{xing2002distance,bilenko2004integrating,davis2007information},
+or relative (specifying a pair to be more similar than
+another)\cite{schultz2004learning,rosales2006learning}.  A basic
+principle used by many metric learning methods is to combine the
+constraints on the distances with some form of regularization on
+$A$. A variety of regularization terms have been considered in this
+context to avoid overfitting, including the well known Squared
+Frobenius norm (a matrix version of the popular $L_2$ regularizer)
+\cite{schultz2004learning,kwok2003learning}, the trace norm
+regularizer (analogous to the $L_1$ regularizer to encourage sparsity)
+\cite{jain2010inductive}, and information-theoretic regularizers
+\cite{davis2007information}. These metric learning methods have been
+highly successful in many applications, including vision
+\cite{hoi2006learning,frome2007learning,guillaumin2009you}, text
+\cite{davis2008structured}, bioinformatics\cite{xiong2006kernel}, and
+most relevantly, automatic program error reporting, where a metric is
+learned to measure distance between program executions
+\cite{davis2007information,HaClarify}.
+
+Despite the availability of many successful metric learning
+algorithms, the problems that we aim to address in this proposal
+cannot be solved by simply applying these metric learning
+techniques. This is mainly due to the fact that the standard
+supervised information that we can acquire for many of our problems
+are not sufficient for effective metric learning, or our desire to
+learn (mixes of) Levenshtein metrics \cite{lev}.  Consider fuzzer
+taming as an example: each $x$ represents a bug-inducing random test
+case. We are given a large collection of bug-inducing random test
+cases, and our goal is to learn a metric such that the test cases
+inducing the same bug are deemed similar to one another, and test
+cases inducing different bugs are dissimilar. Although this appears to
+be a simple and rather direct application of existing metric learning
+techniques, generally we do not have any prior knowledge about what
+bugs these test cases induce and which ones are the
+same/different. Consequently we are faced with the challenge that that
+we would like to assist users even when we do not have sufficient
+labeled data for traditional metric learning.
+
+To address this challenge, our proposed approaches will consider two
+types of supervision: the traditional example-level supervision that
+captures local information between examples, and a novel form of
+global task-level supervision that is informative of the success level
+of a metric in performing the specific task at hand.  For local
+example-level supervision, due to its limited availability, our
+proposed approach will leverage the complex structure of our
+examples, and draw on a separate body of literature on learning with
+scarce data to enhance the effectiveness of metric learning. For
+global task-level supervision, we propose to derive global
+task-oriented effectiveness measures for learning metrics using
+benchmarked tasks. Casting the metric learning problem as a black-box
+function optimization problem, we will develop our solution by
+exploiting some recent developments in Bayesian Optimization.
+
+\subsection{Learning from Local Instance-level Supervision}
+In this section, we will first explain how the complex structure of
+the examples in our application can be leveraged to automatically
+produce supervised information for learning metrics without involving
+human effort.  The availability of such supervision can be highly
+beneficial to learning but is still limited and sometimes can be of
+only one particular type. We will then outline our research plan to explore
+semi-supervised methods to learn with positive and unlabeled data.
+
+\paragraph{Automatically generating example-level supervision.}
+\label{sec:autosuper}
+
+\begin{figure*}[t]
+\centering
+     \subfigure[Test case features, first 150 tests]{ \includegraphics[width=0.49\textwidth]{figures/fmin_discovery_detailed} }
+     \hspace{-.6cm}
+     \subfigure[Test case features, all tests]{ \includegraphics[width=0.49\textwidth]{figures/fmin_discovery} }
+     \subfigure[Function coverage features, first 150 tests]{ \includegraphics[width=0.49\textwidth]{figures/fcov_discovery_detailed} }
+     \hspace{-.6cm}
+     \subfigure[Function coverage features, all tests]{ \includegraphics[width=0.49\textwidth]{figures/fcov_discovery} }
+%     \subfigure[Test case features Subsample, first 50 tests]{ \includegraphics[width=0.45\textwidth]{figures/fmin_subsamp_discovery_detailed} }
+%     \subfigure[Test case features Subsample, all tests]{ \includegraphics[width=0.45\textwidth]{figures/fmin_subsamp_discovery} }
+\caption{\label{fig:disc} Bug discovery curve as a function of examined test cases using different features. {\it Single} and {\it Average} use
+sets of reduced test cases to compute distances, while {\it reduced} only use the reduced minimal test case. For {\it Single}, {\it Average}, and {\it reduced} furthest point first is applied to find the ranking. }
+\end{figure*}
+
+For some of our tasks, it is possible to leverage the complex
+structure of the examples to produce useful similarity
+supervisions. Consider the task of fuzzer taming, where each example
+is a bug-inducing random test case, which has been reduced using
+delta-debugging \cite{DD} to remove noise.  Interestingly, the process
+of delta-debugging actually produces a trail of test cases that are
+known (or at least extremely likely) to trigger the same bug
+\cite{PLDI13}. One basic hypothesis is that by considering the full or
+partial trail of test cases generated by delta-debugging, we may be
+able to define or learn better distance metrics. This hypothesis has
+been partially verified by our preliminary investigation
+\cite{DDTrail}, in which we treat a partial trail of test cases
+generated by delta-debugging collectively as a single example and use
+set-based distance metrics. The results show that we were able to
+significantly improve the bug identification efficiency especially in
+the early stages. Figure \ref{fig:disc} shows discovery curves based
+on 1) using \emph{random} ordering as a baseline, 2) using just the
+smallest \emph{reduced} test case (ignoring the delta-debugging trail)
+3) using \emph{average} pairwise distances between sets and 4) using
+\emph{single} distances between sets based on nearest pairs.  The
+number of discovered classes in the critical early part of the curve
+improves fastest for both coverage and test-case text feature vectors
+when using the information from delta-debugging, though for test case
+features single-linkage is not as good as using a single test case.
+In this project, we will push this idea further by producing must-link
+constraints between test cases of the same delta-debugging trail (as
+we are generally certain that they all trigger the same bug) to help
+learn a better metric. We believe this, in combination with the
+set-based distances explored in our preliminary work \cite{DDTrail},
+can further improve the efficiency of bug discovery.  While at first
+appearance, using delta-debugging trails seems to be limited in
+application to fuzzer taming, we also hope to take advantage of our
+recent generalization of delta-debugging to other criteria (e.g. code
+coverage) \cite{icst2014} to apply similar methods to test-case
+generation as well, as discussed in Section \ref{sec:gen}.
+
+\paragraph{Metric learning with positive and unlabeled data}
+One issue with automatically generated similarity constraints is that
+the amount of supervision is limited not only in terms of its
+quantities, but also in terms of the type of information
+provided. Consider such an automatically induced similarity
+constraint, which indicates that a pair of instances should be deemed
+similar to one another by the learned metric. This can be viewed as
+labeling a pair of examples as similar, which we can interpret as a
+\emph{positive} example. In fact all of the constraints that we
+introduce in this fashion will be positive. In supervised learning,
+one branch of research is to study how to most effectively learn from
+Positive and Unlabeled data, this is referred to as PU learning
+\cite{li2003learning, elkan2008learning}. PU learning has been
+demonstrated to improve learning given limited supervision for text
+classification\cite{li2003learning}, gene regulatory network learning
+\cite{cerulo2010learning}, and remote sensing \cite{li2011positive},
+but has not been applied in the context of metric learning. In this
+research we will explore different PU learning approaches for metric
+learning to further enhance the ability to learn appropriate metrics
+from limited supervision.
+
+\subsection{Learning from Global Task-level Supervision}
+Consider the following form of supervision: we have a specific task
+(e.g., fuzzer taming, where our goal is to identify as many bugs as
+possible by examining only a small number of test cases). Given a
+metric, we can apply this metric to a benchmarked task and measure its
+performance. For fuzzer taming, this means to apply FPF with the
+provided metric on a benchmarked dataset, and measure the area under the
+bug discovery curve. The larger the area, the more effective the
+metric is. Typically this type of measure is only used in the final
+evaluation stage. We hypothesize that this performance measure can
+also be effectively used as feedback and supervision to help improve
+our metric.
+
+Specifically, we propose to cast the metric learning problem into a
+black-box function optimization problem \cite{jones2001taxonomy},
+where the task-level performance measure is the black-box
+function. Note that we can not directly optimize this function using
+standard optimization techniques such as gradient-based methods,
+because we do not know the form of this function. Instead, we can
+empirically sample this function repeatedly and use the collected
+information to search for the optimizing distance metric.
+
+Bayesian Optimization (BO) is a successful Bayesian approach for
+iteratively optimizing a black-box function $f$. In Bayesian
+Optimization, we model the posterior distribution of the unknown
+function $f$ (e.g., using Gaussian Processes) based on our prior
+belief about $f$ as well as the set of currently observed samples. The
+model is used to incrementally select new input configurations to
+sample the function $f$, and the observed function values are then
+used to update the model. BO has been successfully applied to a large
+variety of applications including sensor
+placement~\cite{krause2008near}, optimizing the anode design of
+microbial fuel cells \cite{azimi2010myopic}, and tuning parameters of
+large scale machine learning models to optimize the learning
+performance \cite{snoek2012practical}. To the best of our knowledge,
+BO has not been applied to optimize the performance of a distance
+metric.  This is probably due to fact that distance metric learning
+typically involves a large number of dimensions. For example, when we
+represent test cases with function coverage, we can have thousands or
+even tens of thousands of features. So the number of variables for the
+metric learning problem is very large, exceeding the capability of
+most BO algorithms, which can only handle variables at best. How can
+we address this? Some recent development in BO points to some
+potentially fruitful directions \cite{Wang:2013b}. Specifically,
+random embedding has been demonstrated to be a promising mechanism for
+reducing the dimensionality of the problem and allowing more
+traditional BO methods to be effectively applied. We will investigate
+the effectiveness of BO with random embedding for metric
+learning. Unlike the example-level supervision, this framework is very
+general and can be used with any task that uses a distance metric and
+has a well defined performance measure and some benchmark datasets. We
+believe that testing is a very promising domain for such an approach,
+as there is often a set of, e.g., existing test cases that have been
+evaluated for code coverage and fault detection, or known bugs to
+train on, even though most of the testing work is in the future.
+Large software projects also seem to evolve in a continuous enough
+fashion that metrics may remain useful over a period of months or even
+years; certainly individual test cases have a long
+lifetime and persistent identity, including approximate code coverage \cite{icst2014}.
+
+Finally, BO provides a promising approach for tuning metrics that are
+not based on some function of a feature vector, but instead rely on,
+for example, tuning costs of operations in a Levenshtein \cite{lev}
+metric.  This is potentially critical, as some of the most successful
+metrics in previous work have been Levenshtein-based rather than
+feature-vector based \cite{ChakiLev,PLDI13}.  In addition to tuning
+costs of individual operations or alignments, BO can also help best
+combine multiple edit distances (e.g. over output and test text, or
+execution sequences) into a single measure, or pick abstraction levels
+to apply when actual edit distance over raw data is too expensive
+(e.g. for call sequences).

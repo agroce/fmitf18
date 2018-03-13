@@ -1,0 +1,74 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Results From Prior NSF Support}
+
+The most relevant prior NSF support for PIs Groce and Regehr is
+CCF-1217824, ``Diversity and Feedback in Random Testing for Systems
+Software,'' with a total budget of \$491,280 from 9/2012 until 9/2015,
+a collaborative proposal between the PIs.
+
+\paragraph{Intellectual Merit}
+
+The results of CCF-1217824 include a preliminary exploration of how to
+``tame'' fuzzer output, a problem also considered in this proposal
+\cite{PLDI13}.  In previous work, the goal was to find an algorithm
+for using hand-chosen distance metrics to identify bugs in tests; in
+this proposal, other methods for taming fuzzers are addressed.  A key related result from CCF-1217824
+is the development of a strategy for creating very ``quick
+tests'' from time-consuming randomized test suite by minimizing each
+test with respect to its code coverage \cite{icst2014}, which won the
+Best Paper award at the 2014 International Conference on Software
+Testing. 
+This work showed that tests reduced with respect to
+code coverage can serve as effective regression tests or seeds for
+symbolic execution \cite{stvrcausereduce,issta14}.  Moreover, we
+showed that the benefits of such reduction do not depend on 100\%
+preservation of a property, when that property is quantitative
+(e.g. coverage) rather than qualitative \cite{ASEAdeq}.  Cause
+reduction, with and without complete preservation of properties, is a
+core component of our approach to test operations, and a primary
+demonstration of our conceptual framework, where two tests that
+satisfy the same key properties are assumed to be interchangeable.
+
+CCF-1217824 also contributed to the design and development of the TSTL
+tool \cite{NFM15,tstlsttt}, which supports fully automatic swarm
+testing, based on the actions defined in a test harness, and which is
+a core element of work for this proposal.
+
+Other results from this project include an overview of the value of coverage in
+testing experiments \cite{Onward14} and exploration of how individual
+test features impact the coverage and fault detection statistics of
+random tests \cite{helphelp}.  The basic swarm testing approach has
+been extended to allow production of focused random tests targeting
+particular code \cite{DirectedSwarm}.  At the broader level, CCF-1217824 has
+produced a general set of results that focus on making automated random
+testing usable by practitioners, and using symbolic execution on
+larger, realistic software, in particular understanding how code
+coverage and test content interact, either through minimization or
+through statistical analysis.  Publications resulting from this grant
+are numerous, including ones 
+\cite{Onward14,PLDI13,issta14,icst2014,helphelp,DirectedSwarm,stvrcausereduce,tstlsttt,ISSTA15,ASEAdeq} cited above with relevant results.
+
+\paragraph{Broader Impact}
+
+The results of CCF-1217824 have been used in teaching software
+engineering to undergraduates at Oregon State University. At
+the University of Utah PI Regehr developed a new course ``Writing
+Solid Code'' during this time period, that focused almost wholly
+on software testing, based in part on research driven by this
+grant.
+%
+Work done by both PIs has contributed to the discovery of previously
+unknown faults in multiple open source and commercial software
+systems.  The further development of the swarm testing techniques the
+proposal centers on have in particular furthered the effort to improve
+the quality of compilers, including LLVM and GCC, and to test language
+tools in general\cite{ZhendongPLDI14,beginnerluck,dewey2015fuzzing,le2015randomized}.
+Source code for tools resulting is available online at GitHub in the
+{\tt swarmed\_tools} repository, and data (too large for hosting
+services) is available upon request; TSTL is available on GitHub at
+\url{https://github.com/agroce/tstl}, and key data from fuzzer taming
+is available at \url{https://github.com/agroce/mutants16/tree/master/tests}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

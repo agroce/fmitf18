@@ -1,0 +1,330 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Testing Android}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Sections~\ref{sec:advswarm} and~\ref{sec:symbolic} describe the PIs'
+proposal to perform fundamental research in software testing.
+%
+This section describes how the testing research will be translated
+into pragmatic, open-source tools that will help improve the quality
+of some components of the Android operating system for mobile devices.
+%
+The research will proceed in three steps:
+%
+\begin{enumerate}
+%
+\item 
+%
+We will develop two new random testers for elements of the
+  Android system.
+%
+\item
+%
+We will apply Swarm testing ideas to these testers.
+%
+\item 
+%
+We will use our new random testers to find Android bugs. This
+  will permit us to concurrently evaluate our research ideas and to
+  discover and report previously unknown Android defects.
+%
+\end{enumerate}
+
+
+\subsection{Android}
+
+Android is a Linux-based operating system for mobile devices.
+
+\paragraph{Kernel Level}
+
+It uses a modified kernel that includes:
+%
+\begin{itemize}
+\item
+many new device drivers specific to mobile devices
+\item 
+the \emph{binder}---a sophisticated and relatively complex
+  subsystem implementing security, service lookup, and fast IPC
+  (inter-process communication)
+\item
+a power management subsystem
+\item
+a more sophisticated ``low memory killer'' than the one included
+with Linux
+\end{itemize}
+
+
+
+\paragraph{Middleware Level}
+
+Much of Android's user-level code executes in the context of the
+Dalvik Virtual Machine.
+%
+Dalvik uses a custom bytecode format that provides significantly
+better code density than does Java's.
+%
+At boot time, Android creates a ``zygote'' VM that loads a set of
+commonly-used libraries.
+%
+Whenever a VM is needed, it is forked from the zygote; Linux's
+copy-on-write fork implementation in combination with clever data
+layout tricks (particularly involving the garbage collector) minimize
+the amount of data that will be written.
+%
+Thus, Dalvik sidesteps the slow startup times commonly
+associated with JVMs\@.
+
+
+Android runs a customized graphics stack, eschewing the X Windows
+system commonly found on Linux machines.
+%
+High-performance graphics applications use OpenGL bindings for 
+Java, C, or C++.
+
+
+\paragraph{Application Level}
+
+Android applications are written in Java, which is first compiled to
+Java bytecodes and then into the Dalvik format.
+%
+Applications make use of a class hierarchy providing access to 
+GUI features, sensors, network functionality, etc.
+%
+The basic unit of application programming is the \emph{activity},
+which interacts with a user via buttons, dialogs, etc.
+%
+Activities have a well-defined lifecycle, and events are delivered for
+example when the activity is created or destroyed, becomes visible or
+hidden, becomes the foreground activity or not, etc.
+%
+The system maintains an \emph{activity stack} that users can navigate
+through using dedicated buttons on the tablet or phone.
+%
+Android activities are complemented by \emph{services}, which
+implement long-running computations and do not interact directly with
+users.
+
+
+Activities in Android can invoke other activities from the same
+or from different applications using \emph{intents}.
+%
+Intents serve as a mechanism/policy boundary, as a mechanism for late
+binding, and also as a boundary for security policy enforcement.
+%
+For example, an application would use an intent to share a
+photograph on the Internet.
+%
+The Android system can choose an appropriate service (e.g., Facebook),
+it can fail if no appropriate service is registered, or it can ask the
+user which of multiple appropriate services to use.
+
+
+Unlike typical UNIX or Windows applications, which execute under the
+full set of privileges available to the user running the application,
+Android applications are sandboxed.
+%
+First, every application is given its own UNIX userid, preventing
+it from accessing files created by other applications.
+%
+Second, at install time, an application is granted a collection of
+permissions such as ``access fine-grained location data,'' ``access
+local storage,'' ``send SMS messages,'' and ``use Bluetooth.''
+%
+Android applications are sandboxed at the level of the Linux
+process, not at the level of the Dalvik VM\@.
+%
+The distinction is important since Android applications are permitted
+to run native code libraries that can subvert Java-level guarantees.
+
+
+\subsection{Testing Android Applications}
+
+We will develop a domain-specific random tester for Android
+applications.
+%
+It will focus on three aspects of the Android API that were
+described above: activities, intents, and services.
+%
+In all three cases, the Android code is event-driven; our random
+tester will fire random events using a collection of state machines to
+determine which events are allowable.
+
+
+We expect to find bugs in activities because they must implement
+a fairly complicated state machine.
+%
+In fact, we have seen cases where open-source Android applications
+placed code in the wrong event handler; this code worked fine in the
+expected case but can cause a resource leak or user-visible
+malfunction when events arrive in an unexpected (but allowed) order.
+
+
+Since intents are used as gateways between applications with different
+permissions and levels of trust, bugs in code implementing intents can
+lead to exploitable vulnerabilities.
+%
+Thus, random testing of these interfaces is important.
+
+
+Finally, we will perform random testing of the service interface.
+%
+Code in services runs, by default, in the application thread.
+%
+However, in most cases services are designed to run in the background,
+so they generally fork off one or more threads to perform activities
+such as downloading or uploading a large file, playing music, etc.
+%
+Multithreaded code is often a fruitful place to look for bugs, and in
+fact we have seen open-source Android applications that fork off more
+threads than are strictly needed, and that have excessively
+complicated communication protocols between threads.
+%
+These are smoking guns for serious concurrency errors.
+
+
+\paragraph{Oracles}
+
+Random testing only makes sense in the presence of one or more
+appropriate oracles.
+%
+Since high-level oracles---executable specifications, or alternate
+implementations---are not expected to be available, our testing
+activity will focus on \emph{low-level oracles}.
+%
+First, our random testing infrastructure will assert a number of
+interface invariants that we learn from the Android documentation.
+%
+In particular, adhering to the activity state
+machine\footnote{\url{http://developer.android.com/reference/android/app/Activity.html}}
+is difficult.
+%
+Second, any time an application exits with an uncaught exception, a bug
+has likely been found.
+%
+Third, TaintDroid~\cite{Enck10} is a dynamic dataflow tracking system
+that can be configured to issue a warning when private data (email,
+contacts, location, etc.) is leaked out over a network interface.
+%
+Because the Android permission system is quite coarse-grained, many
+applications have the capability to leak private information, but they
+are not expected to actually do so.
+%
+A number of race condition detectors for multi-threaded Java applications
+have been developed~\cite{Elmas07,Flanagan09}.
+%
+We will port a Java race detector to Android (if nobody else does
+this first); data races are fairly reliable indications of logic
+errors in application code.
+
+
+\subsection{Testing Android Kernel Modules}
+
+Linux kernel modules (LKMs) are binary objects that are dynamically
+loaded into the kernel at runtime.
+%
+Each LKM requires that certain symbols are defined and optionally
+defines more symbols that are exported for subsequent modules to load
+against.
+%
+In this fashion, stacks of device drivers can be built.
+
+
+Our belief is that LKMs are best tested in their binary form.
+%
+To do this, we will implement a user-mode loader for LKMs; 
+this is just a re-implementation of the kernel's LKM loader (and in
+fact it can probably borrow code from the kernel).
+%
+At this point, the random testing infrastructure will issue calls
+to the driver, exercising its functionality.
+%
+The advantage of testing binary device drivers in user mode is that we
+are testing the actual code that runs in deployed systems.
+%
+This is useful because sometimes, interactions with the compiler used
+to build the kernel lead to exploitable
+bugs\footnote{\url{http://www.theregister.co.uk/2009/07/17/linux_kernel_exploit/}}
+these bugs could be masked if we used a different compiler, or
+even different flags.
+
+
+The disadvantage of our proposed approach---compared with, for
+example, exercising drivers ``in place'' inside a running kernel---is
+that it places a significant implementation burden on us, to implement
+emulated versions of each kernel subsystem with which the driver
+interacts.
+%
+We will cope with this problem by focusing our testing efforts
+on a few specific families of device drivers.
+%
+Each member of a device driver family has similar interfaces but
+different internal logic.
+%
+For example, there is a family of Ethernet drivers, sound card
+drivers, filesystem drivers, etc.
+%
+The work required to perform aggressive random testing of a single
+family of device drivers will be modest.
+%
+In fact, PI Groce has significant experience in performing random
+testing of filesystems---an important family of device drivers.
+
+
+The drivers that we focus on will be Android-specific, such as those
+interfacing with the touch screen, GPS, and cellular modem.
+%
+Our belief is that these drivers are relatively poorly tested
+compared to mainstream Linux device drivers.
+%
+We will also test wireless network drivers since bugs in these can
+permit remote exploits.\footnote{An excellent list of known Linux
+  vulnerabilities (including many that are remotely exploitable) can
+  be found here:\\ \url{http://www.exploit-db.com/platform/?p=linux}}
+
+
+\paragraph{Oracles}
+
+First, domain-specific assertions will serve as test oracles.
+%
+For example, a driver that is in a ``stopped'' state should not issue
+events to operating system.
+%
+Second, device drivers are written in C and oracles for C code abound.
+%
+Our own integer overflow checker\footnote{Open source software found
+  here: \url{http://embed.cs.utah.edu/ioc/}} (IOC) has detected a
+large number of potentially harmful integer overflow bugs in C
+programs and we expect it to continue to be useful for testing kernel
+code.
+%
+Valgrind, the Google address sanitizer, and many other tools
+are available to detect memory safety errors in C code; we will
+use them to find driver bugs.
+
+
+\subsection{Swarm Engineering for Android Apps and LKMs}
+
+Our early experience with swarm is that random testers already support
+(i.e., for other reasons) the ability to turn off many kinds of
+features, usually via the command line or a configuration file.
+%
+Some aspects of swarm testing can be completely factored out of the
+random test case generator; for example, if a feedback mechanism wants
+to use a Hamming-distance mechanism to explore configurations ``near''
+ones that have already found a lot of bugs, this requires no special
+support in the test case generator.
+%
+On the other hand, other aspects of swarm, such as parameterizing test
+generators with probability distributions, requires them to be
+modified.
+%
+As part of the proposed research we will attempt to determine how to
+best engineer test case generators that can gracefully plug into a
+swarm testing framework.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+

@@ -1,0 +1,144 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Integration of Swarm and Symbolic Test-Case Generation}
+\label{sec:symbolic}
+
+Random testing can have very high throughput and it scales to very
+large systems under test.
+%
+However, it is not hard to find code paths that have arbitrarily small
+probabilities of being exercised by random testing.
+%
+The canonical example is:
+
+\begin{verbatim}
+void func (int64_t x) {
+  if (x == 34987983243) {
+    ... interesting code ...
+  }
+}
+\end{verbatim}
+
+It is simply not very likely that argument \texttt{x}---assuming it
+originates from randomly generated test data---will take on the
+specific 64-bit value required to execute the interesting code (while
+generating a single 32-bit value is, these days, trivial, it is
+unlikely that computational power will soon expand by another 32
+factors of 2).
+%
+This particular case can be solved by mining constants from the source
+code and using them as ``random'' values---this technique has been
+shown to work for small codes~\cite{leek07}.
+%
+However, such heuristic approaches are not robust with respect to even
+trivial computation on the constant values, such as:
+
+\begin{verbatim}
+void func (int64_t x) {
+  if (x/2 == 34987983243) {
+    ... interesting code ...
+  }
+}
+\end{verbatim}
+
+
+In contrast with random testing, symbolic test case generation excels
+at reaching both interesting code locations above because it directly solves
+for the input value that makes \texttt{x} satisfy the equality test.
+%
+On the other hand, every call to a symbolic test case generation tool
+is expensive---this is a problem when path coverage of a large system
+is being attempted.
+%
+Furthermore, symbolic test case generation does not (currently) scale
+to large software, particularly software like compilers.  Increasing
+the scalability of symbolic techniques is a major open research
+area~\cite{RWSet,WhiteBox,SMART,express}, but many targets remain beyond reach.
+%
+\iffalse
+Compilers are, in fact, a bit of a worst-case scenario for symbolic
+testcase generation:
+\begin{itemize}
+\item The frontend of a compiler typically contains a table-driven
+  lexer and symbol-table lookup; the inverse problems involved in
+  generating inputs that get through these are extraordinarily
+  difficult.
+\item The input to a compiler is highly structured, but the structure
+  is somewhat implicit.  Asking a symbolic test case generation
+  tool to reverse engineer this structure from scratch is perhaps
+  too much to expect.
+\end{itemize}
+\fi
+
+
+Our hypothesis is that symbolic testcase generation and swarm
+testing are synergistic.
+%
+We do \emph{not} propose performing fundamental research in 
+symbolic testcase generation.
+%
+Instead, we propose taking a best-of-breed, open-source tool such as
+Klee~\cite{KLEE} and pairing it up with our swarm-based random test
+case generators in order to create an aggregate testing strategy that
+is stronger than either one alone.  That is, after swarm testing
+exhausts the space of ``cheaply'' explorable paths, symbolic
+techniques can be used to explore the small number of remaining
+locations, without performing expensive symbolic computations to reach
+randomly reachable program behaviors.
+
+
+Swarm testing also suggests a novel approach to increasing the
+scalability of symbolic execution based testing techniques.  Part of
+the problem with symbolic test case generation is that the tool is
+required to deal with a fully generic input.
+%
+Swarm's idea of feature omission diversity suggests an alternative.
+%
+Where symbolic test case generation fails, we believe that restricted
+instances of symbolic test case generation---where the restrictions
+correspond to swarm sets---may succeed.
+%
+In other words, by denying the symbolic tool the freedom to explore
+parts of the input space, we expect to enable it to generate useful
+test cases, since the constraints (case split over possible test
+operations) will be more constrained.  Previous work has shown that
+adding constraints can make symbolic execution much more
+efficient~\cite{exploit}.  We have performed very preliminary
+experiments in using swarm techniques to speed up bounded model
+checking~\cite{FeatureOmission}.  This is a promising area for
+exploration, in that it shows a further value for diverse
+configurations.  In principle, symbolic execution can avoid the
+problem of suppressing features by solving for inputs that avoid the
+problem (e.g., do not {\tt close} the file which must remain open for
+the bug to manifest), but in practice the constraints involved are
+often too difficult to solve~\cite{CFV08}.  However, the success of
+swarm testing shows that for a large number of faults, it is not
+necessary to solve a constraint problem involving all possible test
+features, since solving simpler problems with tighter constraints can
+find faults and explore branches effectively.
+
+\begin{framed}
+  \textbf{Research Questions:} How can we get the best of both worlds
+  in terms of random testing's high throughput and symbolic test case
+  generation's ability to solve for inputs that are very hard to
+  otherwise reach?
+%
+  How can we mitigate scalability problems in symbolic test case
+  generation by constraining the features available to test cases?
+\end{framed}
+
+
+
+\iffalse
+\subsection{Easy Solutions for Easy Problems}
+
+For almost all realistic systems under test, random testing will
+initially offer a better return on investment than symbolic test case
+generation.
+%
+This is due to the vastly larger throughput of random testing.
+%
+We propose initially testing systems using random testing and then
+attacking remaining uncovered branches or paths using symbolic test
+case generation.  Ideally, program slicing can help us find features
+that can be disabled in efforts to reach remaining branches.
+\fi

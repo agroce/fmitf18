@@ -1,0 +1,234 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Testing and Debugging Methods Based on Distance Metrics}
+
+The core hypothesis of this proposal claims that the proper metric for
+program executions is not singular, but a function of the desired
+application. In order to investigate this claim, a set of important,
+realistic software testing and debugging tasks that use metrics is
+required.  For this proposal, four tasks are to be studied:
+
+\begin{enumerate}
+\item Given a set of test cases, rank them so as to maximize the effectiveness of symbolic execution based on those test cases, in terms of covering additional source code and exposing software faults.
+\item Given a set of test cases based on different test-generator configurations, generate new test generator configurations that maximize the chance of covering additional source code and exposing software faults.
+\item Given a set of failing test cases, rank them so as to maximize the probability of exposing $k$ distinct faults with the first $k$ distinct test cases in rank order, in order to enable debugging and fault triage.
+\item Given a set of test cases, some failing and some successful, provide a software developer with likely locations and explanations for the underlying fault(s) causing the failure(s), to speed debugging.
+\end{enumerate}
+
+The first and third problems were introduced in Section
+\ref{sec:prelim}, and their ability to exploit improved distance
+metrics is relatively easy to understand.  The second problem is novel
+to this proposal.  The fourth problem, while not novel to this
+proposal, will be investigated using novel approaches that take into account the latest results in the field.
+
+\subsection{Using Distance Metrics to Predict Good Test Generator Configurations}
+\label{sec:gen}
+
+Traditional random testing uses a single probability distribution (also
+known as a tester configuration) to produce tests, or uses
+meta-heuristics to attempt to find an optimal probability
+distribution.  Swarm testing \cite{ISSTA12}, in contrast, explores a
+diverse set of probability distributions in order to produce diverse
+test cases.  Over time, this increased test diversity produces better
+code coverage and better fault detection than using a single
+configuration.  However, our work in swarm testing to date has only
+used purely randomly-generated distributions, with no effort made to
+optimize the results or learn how elements of a configuration
+interact.  Our empirical examinations of why swarm testing works
+\cite{helphelp} shows that the behavior of configurations is quite
+complex, and there are subtle interactions between elements.
+
+To understand the problem (and swarm testing), consider the problem of
+generating random tests for a file-system API, where there are 30
+possible top-level API calls, including e.g., {\tt open}, {\tt close},
+{\tt read}, {\tt write}, {\tt freespace}, {\tt unlink}, {\tt mkdir},
+and {\tt rmdir}.  In traditional random testing, each step of a test
+selects between all 30 API calls (potentially choosing only ones that
+are currently enabled -- e.g., if no directories exist, {\tt rmdir}
+will not be called).  In practice this leads to less effective testing
+than disabling some API calls for entire tests, producing a far more
+diverse set of tests.  This seems to largely be due to the fact that
+some calls ``suppress'' behavior: for example, calling {\tt close}
+disables potential behavior of {\tt read} and {\tt write} as well as
+making it much harder to discover bugs related to the number of open
+file descriptors.  In swarm testing, therefore, before generating each
+test, a random bit vector of length 30 is generated (this is the test
+generator configuration), with '0's representing calls that will not
+be allowed at all in the current test case.
+
+While effective, this purely random approach is likely suboptimal.
+The problem is not that some combinations are not explored;
+using combinatorial testing methods to ensure, say, pairwise coverage
+does not improve results (and in fact, for the numbers of tests
+generated, $k$-way combinatorial completeness is typically guaranteed
+for reasonable $k$) \cite{ISSTA12}.  Rather, the problem is that the
+naive approach (which does well at maximizing diversity of
+bit-vectors) does not do as well at maximizing program execution
+diversity, which is the real goal --- maximizing vector Hamming
+distance is not effective for this problem, because different bits
+have very different impacts on execution, and in some cases a bit may
+not even impact execution, depending on another bit's value.
+
+As a metric learning problem, the true goal can be formulated as
+learning a metric $d'$ over \emph{bit vectors} such that $d'$
+\emph{predicts} the average distance $d$ between program executions,
+where $d$ itself is formulated based on execution characteristics such
+as faults detected, branches covered, program paths taken, output
+classes, etc.  In this case, $d$ may not be a learned metric, but
+simply a useful evaluation of the coverage and fault detection of a
+set of test cases, for example.  This is an unusual learning problem,
+because a given bit-vector does not deterministically produce a single
+execution, but defines a probability distribution over executions.  It
+is likely to be too expensive to run each bit-vector enough times to
+learn its distribution in detail; rather, information from many
+bit-vectors must be combined to predict the distribution
+characteristics of novel vectors.  As an example, for file system
+testing, the metric over configurations might learn that the value of
+the {\tt close} bit should be weighted heavily when computing distance
+between vectors where the {\tt open} bit is set, and not weighted at
+all, otherwise.  For configurations defining the traits of, say,
+randomly generated C programs, the relationships to be discovered may
+be much more subtle, implicitly capturing the semantics (in
+statistical sense) of complex interacting optimization passes.
+Because the actual set of bits in a configuration required to (for
+example) cover a line of code are typically much smaller than those
+present in a given configuration, we also aim to exploit \emph{cause
+reduction} \cite{icst2014}, delta-debugging by an arbitrary predicate
+(here, coverage of given code) to refine our model of which bits
+influence coverage distance.  The precise application will require
+investigation, as we know that in some cases reducing to a test with a
+small set of included calls or grammar elements is easy, while
+generating a test with the desired coverage but only those elements is
+very difficult, due to the combinatorial space explored.
+
+This problem can be understood as a generalization of Adaptive Random
+Testing (ART) \cite{ARTChen} that addresses some of the problems noted
+with ART \cite{ISSTAART}: first, once a metric is learned, computing
+distances between bit-vectors should be very cheap, as it involves no
+program execution at all and is based on a very small finite number of
+bits.  Second, the use of configurations rather than specific inputs
+as the metric space means most actual testing is highly efficient pure
+random testing, after the training phase.  Swarm testing, unlike ART,
+has been shown to work for industrial scale applications such as
+compiler testing \cite{ISSTA12,icst2014}.  Bayesian Optimization seems
+to be a promising approach for this problem, since the form of the
+function may be complex and capture bit dependencies.
+
+\subsection{Improving Fault Localization}
+
+Debugging is one of the most time-consuming and difficult aspects of
+software development \cite{Vesey,BallVis}.  Recent years have seen a
+wide variety of research efforts devoted to easing the burden of
+debugging by automatically localizing faults.  The most popular
+approaches, following the seminal work of Jones and Harrold
+\cite{Tarantula} use statistics of spectra of failing and successful
+executions to score program entities according to how likely they are
+to be faulty.  Many formulas have been proposed as improving the
+accuracy of scores \cite{Ochai,AMPLE,Pinpoint} over Tarantula.  Most
+of these improvements are either marginal or context-dependent.
+Moreover, the use of spectrum-based localizations has tended to produce
+localizations that are expressed entirely as a ranked list of
+likely-fault statements.  Recent work examining the impact of these
+techniques on actual users \cite{AutoHelp} has suggested that 1) the
+current approaches are not accurate enough to really help users in
+many cases and 2) users would likely benefit greatly from an
+\emph{explanation} of the fault rather than simply a pointer to
+possibly faulty code.  Before spectrum-based localization became the
+dominant paradigm, distance-metric based approaches to fault
+localization showed some promise \cite{NearNeighbor,GroceDist}.  In
+distance-metric based localization, a fault is localized \emph{and
+explained} by finding a successful execution that is as close as
+possible to a failure, and showing the user the differences between
+these runs. The addition of a ``story'' of causal differences between
+executions is a potentially valuable advantage for real-world
+debugging over spectrum-based approaches. However, these approaches
+were abandoned as less accurate than spectrum-based localizations
+\cite{Tarantula}.
+
+We propose to revive the largely dormant distance-metric based
+approach to explanation in two ways.  First, we aim to combine it with
+spectrum-based fault localization.  One idea is to use spectrum-based
+localizations to train a distance metric, then use that metric, rather
+than an \emph{ad hoc} distance metric to produce a metric-based
+localization.  The ranking of spectrum-based localizations can then be
+adjusted by taking into account the distance-metric based results ---
+e.g., if a localization has no similar executions to support it, it is
+lowered in rank. The addition of \emph{explanations} can make it much
+easier for a user to determine if a given localization is reasonable
+or not.  Combining the best aspects of statistical (spectrum-based)
+and distance-metric based approaches promises to finally move fault
+localization from a research topic with no industrial adoption to
+something that can enhance the productivity of real-world developers.
+
+A second, more ambitious idea, is to use Bayesian Optimization to
+learn metrics that are suitable for purely distance-based
+localization, or to tune a combination of distance and spectra-based
+localization.  In the first case, the plan is to use mutation testing
+to produce large numbers of ``faults'' and optimize parameters for a
+set of metrics such that each fault is highly likely to be localized
+well by one of a small set of different metrics representing different
+fault types.  The use of multiple metrics results from two insights:
+first, Parnin and Orso suggest that a localization where the fault is
+in the top two or three ranked locations is very useful
+\cite{AutoHelp}, so it is optimal to tune a system where this is the
+desired result, and only a small set of potential localizations are
+offered.  Second, our overall hypothesis is that different metrics are
+needed for different problems, so different bug-types require
+different metrics.  Use of Bayesian Optimization means that we need
+not \emph{a priori} determine the bug types for each program ---
+optimizing the minimum rank of fault over three metrics will induce
+three diverse metrics, unless a single metric always performs well.
+Second, a single metric could be learned in conjunction with a
+``region size'' to use to determine the area around a spectrum-based
+localization to use in measuring distance, such that parts of an
+execution far from any spectrum-based localization are not included in
+distance, and the small difference can be added to the localization.
+
+\section{Training Data Availability}
+
+A key problem in any machine learning application is the availability
+of suitable training data.  \emph{Learning} effective metrics requires
+some information to inform the learning algorithm.  In this project,
+we propose to address a variety of possible settings suitable to our
+problems, to match the needs of different tasks.  The production of
+instances whose distance is to be measured is, for the most part,
+extremely easy.  Our domain is automated testing, where algorithms to
+produce an essentially unlimited set of distinct test cases (and thus
+program executions) already exist.  However, in order to learn a
+metric, more than just a set of instances is usually required.  Now
+that we have presented the four core problems we aim to address, we
+will revisit the various settings in which learning can take place.
+
+As discussed above, one approach is to use local information about
+pairs of instances that must have small distance, or must have large
+distance.  Our proposed use of delta-debugging trails is a purely
+unsupervised method for generating such information: assuming
+delta-debugging maintains bug identity, no human needs label which
+distances should be small.  Similarly, for the problems of
+prioritizing symbolic execution and of generating swarm
+configurations, information about the ``real'' distances between
+executions can be generated, either by running expensive symbolic
+execution (which limits the number of distances that can easily be
+produced) or by simply executing the test case and recording coverage.
+The local-instance information learning methods are usually only
+suitable for feature-vector based metrics, however.
+
+The alternative approach, for all of our problems, is to use Bayesian
+Optimization to learn a metric in a global fashion: that is, given
+training data and a proposed \emph{task} where the success of a metric
+can be evaluated, tune a metric that performs well.  For example, for
+fuzzer taming, given a set of possible metrics and test cases with
+faults labeled (from historical bug data), learn a metric that may
+carry over to future faults.  Cross-validation and partitioning of
+historical data can be used to avoid overfitting.  This approach is
+particularly suitable for our problems, since large, critical projects
+often have a large recorded history of tests, bugs, and (in the near
+future) even symbolic execution results.  When we have such large
+training sets available (or easy to produce) we can actually compare
+global and local approaches, with respect to the carry-over of
+produced metrics, the ease with which overfitting is avoided, and the
+speed of learning.  Finally, the ease of producing new instances in
+our setting enables interesting active approaches to learning.  For
+instance, if configuration vectors $v_1$ and $v_2$ in swarm testing
+produce very similar statistics for coverage, we can mutate the
+vectors by flipping bits and observing which bits change the distance
+least and most.

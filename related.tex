@@ -1,0 +1,58 @@
+\section{Related Work}
+
+Some of the related work is the general literature on software testing
+problems \cite{anand2013orchestrated,orsofuse}
+that is relevant, which is cited throughout this proposal, e.g. recent
+work on regression testing
+\cite{YooHarman,rothermel01oct,SelectTest,Graves:2001:ESR:367008.367020,STVR:STVR263},
+seeded or parameterized test generation
+\cite{aflfuzz, Jin:2012:BRF:2337223.2337279,Person:2011:DIS:1993498.1993558,Marinescu:2012:MTS:2337223.2337308,TaoParam,BugRedux,tillmann2005parameterized}, flaky tests \cite{memon2017taming,miccoflaky,Gao:2015:MSU:2818754.2818764,LamZE2015,palomba2017does,luo2014empirical} and
+compiler testing \cite{KCC,EllisonRosu12POPL,Hathhorn,csmith,ZhendongPLDI14,ZhendongPLDI17}.  This section
+focuses on more specific precursors to our ideas in this proposal,
+including our own efforts towards the idea of novel test manipulations.
+
+The idea of algorithms that operate on tests, as such, is
+primarily represented in the literature by the work on
+delta-debugging or test reduction in general:
+\cite{DD,HDD,TCminim,MinUnit,CReduce,Lithium,ZellerBook,DDISSTA,IsolThread,Yesterday}.
+Sai proposed a very limited, ad hoc
+version of semantic minimization that aims to go beyond the simplifications possible with
+conventional delta-debugging \cite{SaiSimple}.  Work on automatically producing readable tests \cite{Guava,Readable} is also
+related, in that it aims to ``simplify'' tests.  Test case
+purification \cite{PureTest} is a kind of limited (in approach and in
+goal) decomposition, as are some efforts to produce unit from system
+tests \cite{OrsoKennedy05WODA,
+  SaffETAL05ASE, JordeETAL08ASE, ElbaumETAL06FSE}.  To our knowledge,
+our own proposal on test composition \cite{tecpscompose} is the only
+significant effort towards automated test composition.
+
+In our own preliminary work, we went beyond these ideas to explicitly define
+novel \emph{operations} for \emph{normalization} and
+\emph{generalization} \cite{OneTest}.  Normalization is an operation that, like
+delta-debugging, aims to preserve some predicate describing a test's
+purpose (and validity).  However, rather than simply carving out
+subsets from a test, normalization uses term rewriting to balance the
+goal of (1) preserving some continuity of behavior, reducing the risk
+of slippage \cite{slippageFSE} with (2) the goals of transforming multiple,
+redundant failures into a single failing test, and achieving
+significant additional test size reduction beyond delta-debugging.
+The approach has been shown to reduce the number of redundant failing
+tests by more than an order of magnitude, and often provide additional
+size reduction by a factor of two or more.  Generalization \cite{OneTest} uses a
+similar rewriting approach to produce a family of related tests with
+the same behavior, which makes understanding the accidental and
+essential elements of a failure much easier.   Pike proposed a limited test
+generalization that applies to tests that consist of Haskell data
+values \cite{SmartCheck}.
+
+The idea of representing the generality of tests with the goal of
+enabling complex operations has been relatively unexplored, to our knowledge \cite{woda12}. Andrews et al. presented a
+pool-based concept as part of an effort to analyze bounded exhaustive
+testing vs. random testing \cite{AndrewsTR}, but did not base any idea
+of test operations on this approach.  The UDITA language \cite{UDITA}
+considers related ideas, but focuses only on generation approaches,
+not operations on existing tests.  The TSTL language
+\cite{NFM15,tstlsttt} is a concrete embodiment of tests as selections
+between finite transition operations, informed by the approach to
+model-checking C code used in the SPIN model-checker \cite{SPIN,ModelDriven,NewChall}.
+

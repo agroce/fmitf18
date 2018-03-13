@@ -1,0 +1,61 @@
+\usepackage{fancybox}
+
+%\usepackage{times}
+%\usepackage{epsfig}
+%\usepackage{pifont}
+
+% \usepackage[rflt]{floatflt}
+\usepackage{paralist}
+\usepackage{float}
+
+\floatstyle{boxed}
+\newfloat{custombox}{h}{foo}
+\newcommand{\boxtitle}[1]{{\Large\textbf{#1}}}
+
+%\topmargin=-0.5in
+%\oddsidemargin=0in
+%\evensidemargin=0in
+%\textwidth=6.5in
+%\textheight=9.0in
+
+\date{}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{subfigure}
+\usepackage{url}
+\usepackage{cite}
+\usepackage{fancyvrb}
+
+\ifwww
+  \usepackage[html,1]{tex4ht}
+\else
+  \usepackage[breaklinks=true,letterpaper=true,a4paper=false]{hyperref}
+\fi
+
+\raggedbottom
+
+% pdflatex stuff
+\newif\ifpdf
+\ifx\pdfoutput\undefined
+        \pdffalse
+\else
+        \pdfoutput=1
+        \pdftrue
+\fi
+
+\ifpdf
+        \usepackage{graphicx}
+        \pdfcompresslevel=9
+	\DeclareGraphicsExtensions{.pdf}
+\else
+        \usepackage{graphicx}
+	\DeclareGraphicsExtensions{.eps}
+\fi
+
+
+\makeatletter
+\def\@copyrightspace{}
+\makeatother
+
+

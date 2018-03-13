@@ -1,0 +1,330 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Moving Beyond Simple Swarm}
+\label{sec:advswarm}
+
+Our preliminary work showed that a simple version of swarm
+testing---randomly omitting features from sets of test cases---was
+able to improve the effectiveness of random testing.
+%
+This section describes swarm developments that we believe will provide
+significant additional improvements.
+
+
+\subsection{Supporting a Complex Feature Model}
+
+We have thus far assumed a ``flat'' feature model where we can
+independently decide, for each feature, if it will be allowed in a
+given test.
+%
+In reality, of course, even the features we currently support do not
+fit this model.  
+%
+For example, it is not possible to have bitfields in a C program that
+does not have any structs, and allowing calls to {\tt read} in a
+file system test that cannot contain {\tt open} calls is pointless
+(and the built-in feedback of our file system testers will ensure that
+such tests contain no {\tt read} calls).  The benefits of
+swarm, in our experiments, outweigh the cost of poor configurations.
+However, given that test engineers building industrial-strength random
+testing systems will typically know many dependencies between test
+features, we can improve the effectiveness of swarm testing
+considerably by taking these dependencies into account.
+
+In systems with feature dependencies, it may not be possible to
+generate ``swarm sets'' containing each feature in half of all
+configurations.  If feature B depends on feature A, it may be
+desirable to increase the portion of configurations containing A, in
+order to enable sufficient testing of B; in other cases, it may be
+more effective to include ``base'' features with 50\% probability, and
+dependent features proportional to the degree they are dependent;
+SAT-based techniques could be used to solve for more complex mixes of
+approaches, or to generate configurations in the face of extremely
+complex dependencies, where a ``generate and check'' method will fail.
+Ideas from combinatorial testing~\cite{combin} may also prove useful
+in generating configurations in the presence of constraints.
+%
+Finally, assuming that feature dependencies are tree-structured,
+existing techniques for performing uniform random sampling of tree
+leaves will be useful.
+
+
+While the best solutions will to some extent be system-dependent, we
+expect to draw some general conclusions as to which approaches to
+feature dependencies work best over a range of systems.  
+%
+In particular, since our past work has shown that many features
+potentially suppress faults, it could easily be the case that
+requiring features to be present in more than 50\% of configurations
+will weaken a testing effort.
+
+
+\begin{framed}
+\textbf{Research Questions:} 
+%
+How should feature dependencies be taken into account when generating
+randomized tests: what are the benefits and drawbacks of oversampling vs. undersampling features?
+%
+How can configuration sets be efficiently generated in the presence of complex relationships between features?
+%What are the underlying dynamics connecting features in test cases 
+%with bugs in complex systems?
+%
+%How can these dynamics be exploited to better find the bugs?
+\end{framed}
+
+
+\subsection{Allowing Richer Distributions}
+
+Our current approach to swarm simply chooses a set of
+features to disallow in each configuration.  
+%
+Many real faults, however, will only be triggered if a specific
+feature is present \emph{within some (perhaps narrow) range of
+  proportions}.
+%
+Consider the well known scheduling error in the DEOS real-time
+microkernel from Honeywell~\cite{SPIN03}, where the deletion of a
+thread at a particular point in time induces the fault.  Deleting
+threads too often leads to an expected steady-state with no active
+system threads, preventing the fault from being detected, but
+completely disallowing deletion makes it impossible for a test to
+expose the fault.  Work on choosing optimal distributions for random
+testing \cite{AndrewsL07,ASE11Groce} suggests that for many faults or
+coverage targets, the ideal distributions are far from uniform.  We
+propose to investigate swarm based on much richer distributions than
+``uniform across all present features,'' where rather than a binary
+switch, features are associated with a desired density in test cases:
+i.e., a file system test might contain 30\% {\tt open}, 30\% {\tt
+close}, 20\% {\tt rename}, 10\% {\tt mkdir}, and 10\% {\tt write}
+calls.  Based on our experience with suppressing features, we
+propose to target the distribution space where some features are
+completely absent and other features are very sparse in test cases.
+
+Because complete omission makes detection of many faults impossible,
+swarm has thus far targeted configurations where roughly 50\% of
+features are present.  Using more complex distributions invites the exploration of much more specialized ``stress'' tests on certain features, distributions where a single feature or small set of features appear with very high frequency, and a number of other features are included at minimal density.
+
+\begin{framed}
+\textbf{Research Question:} 
+Which distributions of feature densities are effective in revealing
+bugs, and why?
+%
+Are configurations focusing on a very small number of features as effective as traditional swarm configurations that include roughly half of all features?
+\end{framed}
+
+
+\subsection{Adaptive Swarm Based on Feedback}
+
+Test-case diversity is a motivating factor, even when not explicitly
+acknowledged as such, in a wide variety of software testing
+approaches~\cite{Chen}.  Many of these approaches use some form of
+\emph{feedback}---modifying future test actions or test cases based on
+the results of past tests.  
+%
+For example, adaptive random testing~\cite{ARTChen} seeks diversity at
+the input level by computing a distance from past tests for each
+potential test generated.  
+%
+Structural testing~\cite{structtest}, statistical
+testing~\cite{stattest}, many meta-heuristic testing
+approaches~\cite{searchtest}, and state-of-the-art concolic
+testing~\cite{GodefroidKS05,KLEE,Pex,SenMA05} can be viewed as aiming at a set of
+test cases exhibiting diversity in the targets they cover---e.g.,
+statements, branches, or paths---with past tests guiding creation of
+future tests.  Explicit state model checking for C and Java
+programs~\cite{ModelDriven,JPFRandTest} similarly guides exploration
+based on \emph{states} previously explored.  Swarm
+verification~\cite{swarmIEEE} uses estimates of state generation speed
+from model checking from an initial run to compute a good set of
+diverse search strategies.
+%
+Other approaches make the goal of maximum behavior diversity via
+feedback even more explicit, as in testing via operational
+abstractions~\cite{OpAbs} or testing for contract
+violations~\cite{MeyerStateful}.  Feedback-directed
+testing~\cite{Pacheco} explicitly attempts to diversify the objects
+created during testing, based on previously created objects.
+Korat~\cite{JavaPred} attempts to cover the entire space of structure
+shapes, up to isomorphism.  
+
+In contrast to these approaches, which essentially focus on the test
+or even test operation level, swarm testing aims for diversity at the \emph{test
+configuration} level, based on a ``meta-randomization'' where not only
+tests but the distributions producing tests are randomized.  A key
+advantage of the swarm approach is that it avoids the overhead of
+using feedback at the level of individual tests, with usually requires
+the computation of distance metrics or abstractions, or the solving of
+constraint problems.  Thus far, however, swarm testing completely
+ignores the results of past testing.  
+%
+But it is not obvious how to fix this.
+
+
+With feedback at the individual test case level, it is usually clear
+that feedback should be used to direct testing at least somewhat away
+from previously executed tests.  
+%
+In other words, there is no point in repeating the exact same
+coverage, abstraction, or fault discovery.  
+%
+However, in the case of distributions, it may be that a distribution
+describes a particularly rich space, in terms of coverage and fault
+detection, and that the best thing to do is to devote \emph{more} time
+to a given configuration.
+%
+The simple swarm approach---which is equivalent to neutral (neither
+positive nor negative) feedback---gives equal time to a configuration
+that never produces new coverage or faults and to a configuration that
+continually increases coverage and exposes new faults.  
+%
+However, increased time spent running tests under successful
+configurations means less time is available in a fixed test budget to
+look for other good configurations, which lessens the power of the
+unbiased, aggressive diversification that we believe makes swarm so
+successful.
+%
+Even the ``best'' configuration is likely to saturate at some point,
+having hit all coverage targets and faults for which it is useful.
+%
+Feedback must decay over time if not reinforced, and it may be best to
+devote further test time to \emph{similar} configurations rather than
+re-using an exact known-good configuration.  Positive feedback with decay,
+with or without perturbation of good configurations, is therefore one
+likely route to improving swarm testing we must explore.  The key
+parameters to empirically study are the basis for feedback (coverage
+is more expensive than faults; test failures can always be counted,
+while distinguishing different faults may require human intervention
+or expensive fault localization), how strong feedback should be (given
+the opportunity cost of not exploring additional random configurations), and
+how best to detect saturation of a distribution.
+
+
+One key unknown factor here is the density of independent faults: it
+may be the case that once a configuration has exposed a fault, it is
+unlikely that other faults exist that are best detected by the same
+configuration.  Counterintuitively, with real faults, our initial
+experiments indicate that it could be best to use negative feedback:
+once a configuration has detected a fault, future configurations
+should be chosen such that they are at least some minimal distance
+away, as measured by a distance over the feature presence bit-vector.
+Whether to use Hamming distance or a more complex, feedback-based
+distance, is another key question: some features (e.g., whether to
+call {\tt rewinddir} in file system tests) make very little difference
+in test behavior, while others (e.g., calling {\tt close} or not)
+produce radically different tests even with only a single added or
+removed feature.  We believe that analysis of the dependency structure
+of features may serve as a good initial guide to the impact of
+features.  Using machine learning techniques to cluster features based
+on past impact on test behavior may also be an effective method for
+maximizing the diversity of configurations.
+
+\begin{figure}
+\centering
+\ifpdf% to omit figures from HTML
+\includegraphics[width=0.90\columnwidth]{400-crop.pdf}
+\fi
+\caption{95\% confidence intervals for the percentage of test cases 
+detecting a YAFFS2 bug.}
+\label{fig:confyaffs400}
+\end{figure}
+
+The previous discussion has assumed that feedback is based on full
+configurations: we evaluate a configuration as to whether it is
+``good'' or ``bad.''  An alternative approach is to use feedback to
+change the probability of inclusion for features, or clusters of
+features, in future configurations, based on past performance.  An
+advantage of this approach is that forming a solid statistical basis
+for evaluating a configuration (and determining if it has saturated
+coverage in its target area) may take so long that it defeats the
+purpose of swarm testing.  Simple swarm testing, however, quickly
+provides a basis for evaluating \emph{features} based on past
+effectiveness, both in general and with respect to particular faults or
+coverage targets.  Figure \ref{fig:confyaffs400} shows the profile for
+a seeded fault in YAFFS2.  Such feature (or feature cluster) profiles
+may provide a computationally inexpensive basis for feedback, though
+the problems of saturation and the value of positive vs. negative
+feedback remain.  Moreover, feature profiles are in one sense more
+difficult to use then configurations: the value of a feature may be
+highly context dependent, and a feature or feature cluster is a much
+less precise representation of a part of the test-space than a
+configuration.
+
+Finally, careful attention must be paid in all cases to the null
+hypothesis in swarm testing.  Our results, and the detailed
+statistical profiles we have produced for faults and coverage in file
+systems and compilers, have convinced us that our human intuition is a
+very poor guide to designing test configurations.  It may be that,
+except in very long-term testing efforts, the computational costs of
+feedback, or the danger of falling into local minima, outweigh the
+benefits.  A key point in swarm is that a purely stochastic approach
+to configuration outperforms an ``intelligently chosen'' single
+configuration.  It may be that random generation of configurations
+also outperforms algorithmic approaches to configuration generation in most
+circumstances.
+
+\begin{framed}
+  \textbf{Research questions:} What is the role of feedback in using
+  swarm to find  bugs and achieve good coverage?
+%
+  Should feedback be positive or negative, and what kind of decay
+  schedule should be  applied to feedback that fails to be reinforced?
+%
+  Is feedback best based on individual features, clusters of features, or entire configurations?
+\end{framed}
+
+
+
+
+\iffalse
+\comment{Swarm testing is a low-cost and effective approach to
+  increasing the diversity of randomly generated test cases.
+%
+It is inspired by swarm verification~\cite{swarmIEEE}, which runs a
+model checker in multiple search configurations to improve the
+coverage of large state spaces.  The core idea of swarm verification
+is that given a fixed budget of time and memory, a ``swarm'' of
+diversely defined searches can explore more of the state space than a
+single ``optimal'' search configuration. Swarm verification is
+successful in part because a single ``best'' search configuration
+cannot easily exploit parallelism: the communication overhead for
+checking whether states have already been visited by another worker
+gives a set of independent searches an advantage.
+%
+This advantage disappears in a trivially parallelizable automated
+testing approach such as random testing: random testing runs are
+completely independent, with no need to communicate results or share
+storage.  The benefits of swarm testing thus do not depend on
+any loss of parallelism inherent in the ``monolithic'' approach to
+configuration, or, like the parallel randomized state-space search
+proposed by Dwyer~et~al.~\cite{DwyerSearch}, on the failure of
+depth-first search to ``escape'' a subtree when exploring a very large
+state space.  Rather, the results completely reflect the value of
+(feature omission) diversity in test configurations.
+
+Swarm
+verification and swarm testing are orthogonal approaches in that swarm
+verification could be applied in combination with feature omission to
+produce further search diversity.}
+\fi
+
+
+
+% John's notes:
+%
+%  support flag dependencies (equal probabilities of exploring the leaves)
+%  try feature probabilities 0\%, 10\%, ... 100\%
+%    question is, how dense should features be?
+%  feedback
+%    coverage
+%    faults
+%    unique faults
+%  response to feedback
+%    weakly / strongly positive, weakly / strongly negative, neutral
+%    will need to abstract away some details of configurations
+%      find clusters of N or fewer flags that make a difference, maybe
+%  feedback should decay over time if not reinforced
+%  should have support for diverse concurrent strategies
+%  feedback: when found a bug, only try test cases >5 hamming distance away
+%  need another fuzzer or two
+%    LKMs
+%    Linux system calls
+%    javascript engines

@@ -1,0 +1,85 @@
+
+\section{Research Focus 3: Automatic Test Decomposition}
+
+Automatically and manually generated tests often do more than one thing.  In some contexts (test startup costs, ease of generation/writing), this is beneficial; however, in other contexts, such as ease of understanding, granularity of regression analysis \cite{YooHarman}, or likelyhood of being flaky \cite{listfieldtestanalysis,palomba2017does}, tests that combine multiple purposes are problematic. 
+
+We propose that such complex tests can automatically decomposed into multiple (often overlapping) tests that, taken together, accomplish the same goal.  The core idea of the approach is to analyze the causal structure of the test in reverse, using test reduction algorithms (delta-debugging \cite{DD} or normalization \cite{OneTest}) as a building block.  The algorithm, at a high level, is to first execute the test and observe all causally meaningful events.  The principles in Section \ref{sec:principles} allow us to limit the set of events to a much more manageable set than in traditional execution capture and replay:  typically only binary coverage of statements and branches (or more complex coverage such as paths), plus assertion statements, are relevant.  Consider a test $t=$ {\tt a b c d e f g }that produces ordered events {$e_1 . e_2 . e_3 . e_4 . e_5$}.   Decomposition aims to produce a \emph{set} of tests that also produce $e_1$-$e_5$.  We begin by reducing $t$ with respect to the property that it still produces at least $e_5$.  Suppose this yields test $t_1=$ {\tt a b e g} that produces events  {$e_1 . e_3 . e_5$}.   The next reduction will take $t$ again but this time with the criteria that the reduction produce $e_4$.  If the result is $t_2=$ {\tt a c d f} and events {$e_1 . e_2 . e_4$}, then decomposition is complete, with two tests.  Decomposition begins from the last events in a sequence, on the expectation that many earlier events will be required to produce those events, in order to limit the number of reduction queries and produce ``natural'' tests, essentially pulling apart a tangled web of casusality into multiple, independent (but with possible duplication of both test steps and events) threads.  As a concrete example, consider the file system test and its decomposition, shown in Figure \ref{fig:decompfs}, produced by our initial implementation of decomposition in TSTL.  Decomposition preserves actual interactions that produce novel behavior (code coverage), but removes accidental interactions.
+
+\begin{figure}
+{\scriptsize
+\begin{code}
+ORIGINAL TEST:                         DECOMPOSITION 1:                      DECOMPOSITION 3:
+component0 = "b"                       os0 = newFakeOS()                     os0 = newFakeOS()
+os0 = newFakeOS()                      path0 = "/Volumes/ramdisk/test"       path0 = "/Volumes/ramdisk/test"
+path0 = "/Volumes/ramdisk/test"        path1 = "/Volumes/ramdisk/test"       component0 = "c"
+path0 += "/" + component0              component0 = "e"                      path0 += "/" + component0
+path1 = "/Volumes/ramdisk/test"        component1 = "c"                      result = os0.readlink(path0)
+os0.link(path1,path0)                  path0 += "/" + component1 
+component0 = "e"                       path1 += "/" + component0             DECOMPOSITION 4:
+os0.makedirs(path0)                    os0.makedirs(path1)                   component0 = "b" 
+component2 = "c"                       os0.rename(path1,path0)               os0 = newFakeOS()
+path0 += "/" + component2                                                    path0 = "/Volumes/ramdisk/test" 
+result = os0.readlink(path0)           DECOMPOSITION 2:                      path0 += "/" + component0
+path1 += "/" + component0              os0 = newFakeOS()                     path1 = "/Volumes/ramdisk/test"
+os0.makedirs(path1)                    path0 = "/Volumes/ramdisk/test"       os0.link(path1,path0)
+os0.link(path0,path0)                  component0 = "c"
+os0.rename(path1,path0)                path0 += "/" + component0
+                                       os0.link(path0,path0)
+\end{code}
+}
+\label{fig:decompfs}
+\caption{Automatic decomposition of a complex file system test into easier to understand (and use to generate new tests) component tests with equivalent total code coverge.}
+\end{figure}
+
+There are many challenges in the problem of decomposition:  our TSTL implementation supports only code coverage events, not correctness checks such as assertions and differential comparisons, or stress events such as system load or free memory.  Decomposition for multi-threaded or multi-process tests, where event ordering in a particular run may be arbitrary is also essential for scaling to real-world system tests, where the impact is greatest.
+
+We believe that test decomposition will be similarly useful for
+compiler testing; for example, decompositions can inform novel metamorphic \cite{MetaTest} compiler testing approaches \cite{ZhendongPLDI14} or make it possible (along with normalization) to extract complex canonical sub-programs \cite{ZhendongPLDI17} from complex real world code.
+%
+Decomposed test cases will be more likely to be amenable to composition
+operators as well, enabling composition-based test generation.
+
+More generally, automatic causally-sound decomposition of tests is extremely promising for \emph{all}
+test generation techniques that use \emph{seed} tests to generate new
+tests \cite{seededprovenance}.  We propose to extend
+causal decomposition to produce better seed tests for AFL,
+seeded versions of KLEE, EvoSuite, and TSTL itself.  In previous work, we showed that reducing the
+size of seed tests for KLEE could greatly improve performance of
+symbolic execution \cite{issta14,stvrcausereduce}, and we expect
+similar (or better) gains should be possible with decomposed tests,
+which can decrease test size greatly beyond what is possible with
+cause reduction alone.  
+
+Decomposition is also a potentially powerful tool in the
+avoidance of flaky tests
+\cite{miccoflaky,palomba2017does,luo2014empirical}.  Flaky tests are
+tests that sometimes fail for non-deterministic reasons (not related
+to the faultiness of the underlying code), and pose a major problem
+for Google-scale testing \cite{miccoflaky,memon2017taming}.  Analysis
+by Google engineers suggests that sheer test size
+\cite{listfieldtestanalysis} is a major factor contributing to flaky
+behavior.  We have discussed (and submitted a Google Faculty Research
+Proposal sponsored by John Micco based on) the idea of using
+decomposition to reduce the size, and thus potential for flaky
+behavior, of tests.
+
+Finally, decomposition supports reducing the granularity and thus
+improving the effectiveness of methods
+we have recently proposed \cite{SASO}, as part of the DARPA BRASS
+program \cite{hughes2016building}, for using tests as a basis for
+specifying resource-adaptation specifications for use in self-adapting software.
+
+\mycomment{
+Even a very preliminary approach to normalization, without the
+benefits of further development of concepts of test representation,
+has shown extreme promise.  For a large set of real test
+cases for real faults in the widely used SymPy Python symbolic math
+library \cite{sympy}, normalization was able to reduce the mean number of failing
+tests per fault from 12.5 tests to 3.15 tests.  The mean number and number of
+distinct API calls (the first being the length of the test, the second
+being a measure of the ``complexity'' of the test in terms of
+functions to consider as contributing to the fault) were reduced, compared to delta-debugging, by over
+45\% and 35\%, respectively.  All results were statistically
+significant with $p < 0.005$ by Wilcoxon test \cite{arcuri2014hitchhiker}.    If such results can be extended to
+compiler testing, it will be a major practical benefit to the language
+tool community.}

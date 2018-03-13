@@ -1,0 +1,553 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Software systems are becoming an increasingly critical part of modern
+society.  Mostly-automated cars seem to be in our near future, and
+phones, spacecraft, and even household appliances now rely on large
+code bases.  Unfortunately, large software systems, even those in
+critical domains, remain buggy and poorly understood, with dangerous
+consequences for human safety and security \cite{nist-report}.
+
+The main approach used to ensure that software systems work as
+intended is testing \cite{nist-testing}.  Testing is, to a first
+approximation, \textit{the} reason that complex software systems work
+at all.  Testing is an important subfield of software engineering, and
+there is a vast body of work on producing, using, and evaluating
+software tests.  The high cost of effective testing is a major burden
+on software development efforts; the failure to achieve effective
+testing represents a threat to the economy and sometimes to human
+life.
+%
+Some key outstanding problems in software testing are:
+
+\begin{enumerate}
+\item Regression testing is often expensive
+  \cite{YooHarman,rothermel01oct,SelectTest,Graves:2001:ESR:367008.367020,STVR:STVR263}.
+  Analyses to determine which parts of a large regression suite must
+  be run, based on code changes, are expensive, and if the analysis is
+  very fine-grained, it can be more expensive than just running
+  un-needed tests \cite{DarkoFSE}.  Moreover, when individual tests in
+  a regression suite are small, it enables fine-grained regression
+  selection and prioritization, but often at the cost of spending most
+  testing time in setup and teardown, rather than actual testing
+  \cite{KaiserBell}.  Larger tests, however, force coarse granularity
+  of analysis,
+  make debugging harder, and may result in unreliable ``flaky'' tests \cite{miccoflaky,listfieldtestanalysis}.
+
+\item Failing tests are the end-goal of software testing, but in many
+  situations can be as much a curse as a blessing \cite{PLDI13,OneTest}.  When testing produces too many failures, determining the number of
+  faults, and which tests correspond to the same underlying faults, is
+  extremely difficult \cite{Podgurski03,Podgurski04}.  Bug triage is often essential, to rapidly
+  detect security- or safety-critical faults, but can be very hard
+  without automated methods for handling large numbers of failures ---
+  especially as even with thousands of failing tests, many faults will
+  have only one associated failing test.  Moreover, some tests (flaky
+  tests) fail not because of incorrect code under test, but because of
+  problems in the testing or its environment.
+
+\item Test case minimization \cite{DD,TCminim,CReduce} is essential
+  for effective understanding and debugging, and critical to methods
+  for handling large numbers of failing tests.  Unfortunately, handling tests that
+  are not either based on a structured grammar or a simple sequence often requires manual effort, and there
+  is no easy way to effectively minimize tests that mix data and code.
+  Delta-debugging additionally sometimes takes a test that fails due to one fault, and transforms it into a test that
+  fails for a different reason, often due to a less important,
+  easier-to-detect, or even already-known fault \cite{slippageFSE}.
+
+\item Finally, and most importantly, generating good tests remains
+  extremely difficult, and automated test generation is still not
+  widely used.  Moreover, even when good tests exist for components of
+  a system (especially a heterogeneous system), combining these into
+  useful and valid full-system tests is difficult.  System testing
+  often starts from scratch, even in the presence of good component
+  tests.  Methods for generating new tests from existing tests rely
+  on the quality and the \emph{size} \cite{issta14} of provided tests.
+\end{enumerate}
+
+This proposal aims to make progress in addressing all of these
+problems, and especially the last problem, through a novel conceptual
+approach based on changing the way that individual tests are
+treated. Too often, tests are essentially static entities, generated
+once in a largely fixed form, and thereafter only executed.  There is
+a surprisingly small body of software engineering research that treats
+individual tests --- the foundational components of all software
+testing --- as first-class entities.  Most software testing research
+treats tests, once generated, as atomic, opaque, and only supporting
+one operation: test execution.  For example, there is a large
+literature of test \emph{suite} selection, prioritization, and
+minimization, dating back more than 20 years \cite{YooHarman}.  The
+first paper proposing minimization of \emph{individual tests} for
+analogous purposes only appeared in 2014 \cite{icst14}.  Tests are among the most
+important objects in software development, but unlike functions,
+classes, or modules, there is little theoretical or practical
+treatment of composition, decomposition, or other manipulation of
+tests.  Even the concept of what constitutes a test is not well
+explained in the literature --- is a test an ``input'' to a program (a
+viewpoint frequently taken in test generation), or is a test a small,
+somewhat mysterious in purpose, program associated with a ``real''
+program (the practical concept of a unit test)?  Even early,
+foundational work
+\cite{DBLP:journals/iandc/DavisW83,DBLP:journals/tse/WeyukerO80}
+generally assumes that a test is a ``program input,'' an atomic and
+undifferentiated entity.  Beizer \cite{Beizer} considers sub-tests,
+but only to note that a test can be composed of sub-tests where the
+output of one test is the input of the next in a sequence.
+
+The exception to the lack of focus on individual tests is
+delta-debugging \cite{DD}.  Delta-debugging treats a test as an
+ordered sequence of circumstances, and uses a modified binary search
+to produce, from a failing test, a (possibly) smaller failing test
+that omits circumstances not required to preserve the failure.  The
+promise of focusing on individual tests may be demonstrated by the
+fact that, unlike most automated debugging methods, delta-debugging is
+widely employed in real-world development, from NASA file
+systems~\cite{ICSEDiff} to C compilers~\cite{CReduce} to JavaScript
+engines~\cite{jsfunfuzz2,Lithium}.
+
+The lack of focus on manipulation of individual tests is unfortunate:
+as both human effort and the long history of automated testing make
+clear, effective tests are valuable and difficult to come by, and
+maximizing their potential is critical for effective software testing.  At
+present, tests in most settings provide (with some effort) essentially
+only one operation in addition to execution: they can be minimized with respect to some
+predicate.  For the most part, it is not possible to compose two
+tests, to decompose a test into components that target non-interacting
+behavior, or, until our preliminary work for this proposal, to rewrite a test to perform the same functionality but in a
+simpler way, or generalize a test into a family of tests that
+maintain its key properties (e.g. failure, coverage, resources used)
+in order to highlight essential and accidental aspects of the test \cite{OneTest}.
+While aspects of some of these ideas have been presented before ---
+decomposition of system tests into unit tests \cite{OrsoKennedy05WODA,
+  SaffETAL05ASE, JordeETAL08ASE, ElbaumETAL06FSE}, generalization to
+parameterized unit tests \cite{TaoParam,tillmann2005parameterized}, or (symbolic) seeding that exploits a test's
+structure to
+produce new tests \cite{Jin:2012:BRF:2337223.2337279,Person:2011:DIS:1993498.1993558,Marinescu:2012:MTS:2337223.2337308,BugRedux,STVR_seeding} --- there is little work on
+generalized algorithms, analogous to delta-debugging, for manipulating
+tests in novel ways.  
+
+\subsection{Problem Statement and PI Qualifications}
+
+Together, the PIs have a long history of successful effort in software
+testing, including practical testing of real systems ranging from
+flagship NASA missions to the most widely used production compilers.
+We are intimately familiar with both a wide variety of actual tests
+and the uses to which users wish to put these tests, in addition to
+having wide knowledge of (and contributions) to the academic
+literature on testing.  This combination of practical testing
+knowledge and research expertise supports this project's goal:
+
+{\center\fbox{\begin{minipage}{0.85\textwidth}
+  We will formulate a practical theory of tests as first-class entities,
+  that can enable the creation of algorithms and tools for
+  operations addressing
+  key problems in software testing.
+\end{minipage}}\vskip 0.1in}
+
+The specific problems to be addressed are defined in terms of useful
+operations on tests that would advance the state-of-the-art in
+software testing, in particular for the four problems posed above
+(regression testing, fault identification, improved test minimization,
+and test generation).  This proposal will focus on two core
+operations, the building blocks, along with delta-debugging, for other
+test manipulations:
+
+\begin{enumerate}
+\item {\bf Test composition:} Replacing distinct tests $t_1$ and $t_2$
+  with a single test, $t_1+t_2$ that retains the useful properties of
+  both $t_1$ and$t_2$ would have numerous benefits.  It is well known
+  \cite{KaiserBell} that test startup and cleanup costs often use up more than
+  90\% of test execution time; merging compatible tests without
+  reducing fault detection capability could dramatically improve the
+  runtime of many test suites.  When $t_1$ and $t_2$ are tests for
+  different sub-systems or interfaces of a larger system, their composition may
+  reveal faults that cannot be revealed by either test in isolation;
+  this is particularly promising in complex domains such as heterogenous
+  cyber-physical systems or production compilers, where writing automated test generators
+  for single aspects (e.g., a particular sensor or, in a C++ compiler, template processing) is
+  often easy, but writing generators for the full input domain
+  is so daunting it is never, in practice, done at all.
+  Finally, if $t_1$ is an automatically generated test and $t_2$ is
+  manually constructed, effective composition could combine the
+  thoroughness and unpredictability of $t_1$ with the more powerful
+  oracle \cite{oracleMcMinn} of $t_2$.  
+
+\item {\bf Test decomposition:} The companion operation to
+  composition, decomposition, takes a test $t$ and breaks it down into
+  smaller tests, $t_1 \ldots t_n$, where the \emph{set} of tests preserves
+  key test properties of the original $t$.  Here, the benefit is in the finer
+  granularity of testing.  Reducing the size of ``atomic'' tests can
+  improve test suite selection, prioritization, and minimization,
+  decrease the probability that regression tests will be ``flaky,'' aid
+  debugging, understanding, and triage of tests, and (we believe) greatly
+  improve the power of test generation tools such as AFL
+  \cite{aflfuzz} and KLEE
+  \cite{KLEE,Marinescu:2012:MTS:2337223.2337308} that rely on seed
+  inputs \cite{seededprovenance}.  
+  Additionally, enhancing automatically generated tests with more
+  elaborate oracle checks \cite{oracleMcMinn} (perhaps derived from human-produced tests)
+  is likely to be easier for smaller, simpler tests, due to scaling
+  problems with the reasoning involved.  This last aspect is part of a
+  more general point:  decomposition can assist composition --- because two tests can be incompatible,
+  decomposing two large tests into smaller subsets may make it
+  possible to construct a better composition of the compatible parts
+  of those tests.  Delta-debugging is a special case of
+  decomposition, where a test is broken into two parts, one of
+  which is discarded as useless; our work to improve delta-debugging
+  (e.g. by avoiding/exploiting slippage \cite{slippageFSE}) also falls
+  under the category of improving test decomposition.
+
+\mycomment{
+\item {\bf Test normalization:} Normalization \cite{OneTest} takes a test $t$ and
+  returns a test $t'$ such that $t$ and $t'$ satisfy the same property
+  $p$, and $t'$ is a \emph{normalized} form of $t$.  For two tests,
+  $t_1$ and $t_2$ that expose the same fault, normalization should
+  make it highly probable that $norm(t_1) = norm(t_2)$.  While
+  delta-debugging reduces the size of test cases containing redundant
+  or irrelevant operations, it only produces tests that are a subset
+  of the original test.  This means that two delta-debugged tests for
+  the same fault often retain superficial differences, making it
+  difficult to determine the number of distinct faults in a large set
+  of failing tests.  Normalization further rewrites test cases,
+  simplifying them in a more aggressive manner using a term rewriting
+  approach \cite{term1,term2} devised to minimize semantic impact, while retaining the
+  essential property of the test (e.g., that it fails, or exercises
+  particular functionality of the system under test) and converging on
+  a normal form.  This will often
+  transform two tests exposing the same fault into the \emph{same
+    test}, reducing the bug triage problem to syntactic
+  equivalence; in preliminary experiments, we see up to a tenfold
+  reduction or better in tests to be examined. Normalization also allows advanced reasoning about the
+  causes of a test, and even improves test reduction significantly
+  beyond what is possible with delta-debugging alone.
+
+\item {\bf Test generalization:} The companion operation to
+  normalization, generalization takes a test $t$ and elaborates a set
+  of tests $t_1 \ldots t_n$ that all satisfy some property $p$ (e.g.,
+  that $t$ fails) satisfied by $t$; these tests show which aspects of
+  $t$ are accidental, and not required in order to satisfy $p$, and
+  which are essential to $p$.  Generalization can aid fault
+  localization, by helping to distinguish essential and accidental
+  aspects of a failing test.  Generalization can also be used to
+  discover a faster-running alternative version of a slow-running test
+  (if the slowness is not essential to the purposes of the test), to
+  produce a parameterized test, or to search for a test that can be
+  composed with another test, when the original test does not properly
+  compose.  Together, normalization and generalization allow the
+  creation of close-to-canonical forms of tests, annotated with
+  information about the abstract structure (in terms of data and
+  control flow) of the test with respect to a property $p$.}
+\end{enumerate}
+
+
+The full set of operations to be defined for tests is likely to
+go beyond these two core operations.  For example, we plan to build on
+our preliminary work defining the operations of \emph{normalization}
+and \emph{generalization} \cite{OneTest}; we are also considering
+using partial evaluation of parameterized tests to exploit compiler
+optimizations to both speed test execution and identify important
+input values without costly/hard-to-scale symbolic/concolic
+execution \cite{GodefroidKS05,KLEE} or
+difficult search for difficult-to-produce inputs; and we have proposed
+annotation of tests produced by ``learning'' approaches with
+provenance information, or the generation of ``false'' provenances
+\cite{seededprovenance}.  However, 
+composition and decomposition encompass a large variety of the most useful
+manipulations and offer powerful new tools to address the most critical testing problems.
+
+
+\subsection{What is a Test?}
+\label{sec:principles}
+
+%In addition to defining useful operations over tests, 
+
+\mycomment{It is essential to build operations on top of a concept of tests that
+encompasses tests that primarily consist of input data and tests that
+consist of sequences of function or method calls (or other
+``actions'').  Without such a foundation, methods are likely to be too
+\emph{ad hoc} to apply in novel testing situations, or overly tied to
+particular tools.  Such an understanding will also enable effective
+testing where input data and actions are mixed together.}
+
+The development of operations making tests first-class entities in
+software development depends on a better definition of the test
+concept.  Our approach proposes to build on several insights:
+
+\begin{enumerate}
+\item {\bf Tests are simple functions (typically with no inputs) that return
+    a labeled set of correctness conditions.}  The simplest test
+  returns a Boolean value, indicating whether it passes or fails.
+  More complex tests tend to have multiple failure
+  conditions, and can fail in some respects (e.g., not satisfy a
+  real-time deadline) while succeeding in others (e.g.,
+  computing a correct value).  While this definition is natural for
+  unit tests, where a test is a sequence of
+  function calls and assertions, it is less obvious how it applies to
+  tests that consist of input data.  However, by viewing a file,
+  string, or other input data as a function that first constructs the
+  input data, then executes the system on the test and checks the
+  result, we can both show the similarity of these different kinds of
+  tests, and emphasize that in the absence of a specification and
+  method for connecting it to executable code, a file, in itself, is
+  not a ``test.''  Test functions also are almost always both loop and
+  branch free.  This means that when they are viewed as code, they are
+  unusually amenable to analysis, and have a simpler-to-analyze causal
+  structure than arbitrary code.
+
+\item {\bf Tests can be invalid.}  A valid test is a function such
+  that when it returns a value indicating failure, this indicates an
+  actual problem with the system under test.  An invalid test, such as
+  a C++ program that has undefined semantics, may fail without this
+  indicating a real problem with the system.  Operations should
+  maintain or increase validity.  While in some cases determining test
+  validity is no easier than general program correctness (e.g., is
+  this the right assertion?) in other cases validity is a much easier
+  property to check.  For example, many programs are required to never
+  crash due to memory safety violations; a test with no assertions may
+  be valid due to its only failure conditions being such crashes.
+  \mycomment{Validity is often defined differently for different parts
+    of a test's return value.  One major insight of this proposal is
+    that test validity is easier to both check and maintain for
+    shorter, simpler, tests; but longer tests tend to be more
+    effective at finding faults.}
+
+\item {\bf Tests are defined (or specified) by the behavior they
+    cause.}  Non-test code exists to fulfill a set of \emph{functional}
+  purposes:  it carries out some computation related to the
+  requirements for the software.  Test code is different in that it is
+  not functional (the system can fulfill all its requirements without
+  the execution of any test code).  Test code is, rather than
+  functional, ``epistemological.''  That is, it exists only to provide
+  information about the software system.  While functional code can
+  sometimes be broken down into separate components, it is often the
+  case that \emph{no} functional code can be removed from a system without
+  violating some system requirements.  Test code, on the other hand,
+  especially automatically generated test code, is often easy to decompose
+  into separate, independent aspects, some of which are not essential
+  to the test's value.  For example, delta-debugging
+  relies on the fact that the key information provided by a failing test
+  is that the test fails; other computation (not required to cause the
+  failure, or to maintain test validity) is irrelevant.  Information obtained from tests is always obtained by
+  introducing certain \emph{causes} and observing their
+  \emph{effects}.  This means that a single test has many potential
+  ``views'' or versions, depending on the effects of interest. 
+
+
+\mycomment{
+The code of a system under test exists to provide some
+  functionality; it is defined by that functionality.  While the purpose
+  of a function can sometimes (especially in the presence of side-effects)
+  be projected into multiple sub-behaviors, that purpose is not
+  arbitrary with respect to the remainder of the code in a system, and
+  duplication of purpose is either unusual or targeted for removal.
+  Test code, on the other hand, exists to provide information about the
+  other functions in a system, and thus tests are open to many
+  ``specifications,'' some changing over time (a test with the purpose
+  of helping to debug a fault may change into a regression test to
+  detect the re-emergence of similar faults), others co-existing at
+  the same time:  a test can be defined by the code it covers, the
+  number of threads it invokes, the load it produces, the memory it
+  accesses, and so forth.  Critically, however, these purposes can be
+  checked by some predicate of the Boolean outputs of the function and
+  the results of system instrumentation.  The core of this idea is
+  that a test is specified by multiple, essentially independent,
+  \emph{causal constraints}, which are almost always less coupled to
+  the particular effects/implementation of the test than with code in
+  the system under test itself.  In short, a test is (often) written
+  for some purpose, but a test can be usefully seen as having multiple
+  purposes, and considered from various points of view.}
+
+\item {\bf Finally, the components of a test often have a richer structure
+  than is taken into account in delta-debugging.}  Hierarchical
+  delta-debugging (HDD) \cite{HDD} was based on the idea that components often exist in
+  a hierarchy, e.g. the nesting of parenthetical expressions or blocks
+  of code in a program.  However, the structure of components goes
+  beyond this:  first, by viewing data-based tests as code to
+  construct data, we can see components as interchangeable if they are
+  of the same type, and can appear as arguments to the same
+  functions.  Second, we can group sets of components into classes,
+  where the items in a class are likely 
+  interchangeable \cite{ISSTA12,helphelp}.  Finally, components, rather than
+  simply being equal or sharing an equivalence class, can have
+  fine-grained \emph{distances} from each other.
+\end{enumerate}
+
+The first insight makes it possible to define operations that apply to
+all types of tests, yet which go beyond the minimal notion of components
+used in delta-debugging \cite{DD}.  Understanding tests this way makes
+an idea such as HDD easier to understand:  the
+test is seen in HDD as a (conceptual) function in which
+the input is constructed by calls to an abstract syntax tree
+manipulation API, and the test reduction works at the level of this
+implicit function.  HDD can thus be re-considered as modifying
+a program that constructs a tree-structured input using the data
+flow relationships of the AST constructors.
+
+The second and third insights modify the first.  While correctness \emph{must} be indicated by a test's
+return value, other data may be more relevant in a given context
+(the classic example being code covered by the test).  Extensive
+modification of non-test code that goes beyond semantic-preserving
+refactoring or compiler optimization is usually impossible without human
+guidance: the functional purpose is seldom available in any form other
+than the code itself.  With tests, however, any
+computation that preserves a critical quality ---
+fault detection, code coverage, system load --- is likely to
+serve as well as the original test, so long as it is also \emph{valid}.  This point --- that any test
+operation must also know the behavioral properties and validity
+constraints for tests --- makes it possible to formulate
+aggressive operations that go beyond those possible with normal non-test
+code.  That tests are functions, on the other hand, lets the operations be
+based on ideas from manipulating ``normal'' code.  In short:  while
+attempting to reduce or rewrite non-test code, in the absence of a
+semantic guarantee that behavior is preserved, is unlikely to
+be useful, that approach to \emph{test code} is already widely
+used in test reduction, and could be used far more extensively in new operations.
+
+The fourth insight allows us to go beyond removing components
+from a test, or performing a brute force search for alternative tests,
+and instead \emph{intelligently} replace components of a test during an
+operation.  This does not even require defining a classification of
+actions specific to each testing problem.  Defining a
+general method for exploring alternative tests, and then using even an off-the-shelf distance metric
+such as a Levenshtein edit distance \cite{lev} enables 
+more radical test manipulations.
+
+
+
+{\center\fbox{\begin{minipage}{0.85\textwidth}
+  In short, tests are \emph{functions}, typically with no inputs,
+  whose purpose is defined not by functional goals of software, but by
+  \emph{validity} with respect to epistemological goals, primarily including
+  correctness, but also measuring behaviors examined. Tests are \emph{causal structures} that answer questions about
+  the core, non-test, functional, code of a system.  Test
+  components are often related, classified, (and interchangeable) in ways components of functional
+  code are not, making tests amenable to novel operations not suitable
+  for non-test code.
+\end{minipage}}\vskip 0.1in}
+
+
+
+\begin{figure}
+{\scriptsize
+\begin{code}
+e1 = 'i'
+e2 = '2'
+e3 = wrap(e1) + '*' + wrap(e2)
+e4 = wrap(e3) + '-' + wrap(e3)
+e5 = '[' + wrap(e2) + ',' + wrap(e2) + ']'
+e6 = '[' + wrap(e4) + ' for ' + e1 + ' in ' + e5 + ']'
+assert eval(e6)[0] == 0
+\end{code}
+}
+\caption{Test mixing input data generation (Python expression) and
+  execution.}
+\label{fig:test}
+\end{figure}
+
+As an example, consider the test shown in Figure \ref{fig:test}.  This
+constructs a string representing an expression in Python (the data),
+using a function {\tt wrap} that places parenthesis around a string,
+then asserts that evaluating that expression yields the
+correct value.  This test can be rewritten as a function taking no
+arguments that returns the value asserted.  This test can be
+manipulated in a large number of interesting and useful ways once (1) the
+data is seen as code, (2) the purpose of the code is defined (coverage
+targets plus
+validity of the assertion), and (3) the constructors for expression 
+strings are related to each other.
+
+Operations will almost always be heuristic rather than deterministic:
+in some cases, there is no behavior-preserving composition, the best
+decomposition is no decomposition, and so forth.  There are also
+cross-cutting concerns:  e.g., slippage is a problem for both
+normalization and decomposition/reduction \cite{slippageFSE}.
+
+\subsection{Expected Outcomes}
+
+\mycomment{
+PI Groce has developed the TSTL~\cite{NFM15,ISSTA15,tstlsttt} language for
+testing Python systems, and PI Regehr has developed the
+C-Reduce~\cite{CReduce} test-case reducer for minimizing the size of
+failure-inducing inputs to C and C++ compilers.
+%
+The concrete outcomes of the proposed work will be largely realized in TSTL
+and C-Reduce.}
+
+The following specific outcomes are expected (not an exhaustive list):
+\begin{enumerate}
+\item Algorithms and tools for test composition and decomposition.
+\item Novel test generation methods based on composition of existing
+  tests,
+  leading to better fault detection and code coverage in various
+  contexts, including combining highly focused test generators,
+  combining tests that address various aspects of heterogenous
+  cyberphysical systems, and the production of mixed-initiative
+  human/automatically generated tests.
+\item Significant improvements to seeded test generation tools
+  (e.g. AFL \cite{aflfuzz}, KLEE \cite{KLEE}, EvoSuite
+  \cite{FA11}, TSTL \cite{NFM15}) based on decomposition of seed tests:  simpler
+  (but not too simple)
+  input tests are likely to be better seeds and enable scaling of
+  symbolic execution.
+\item Improvements to regression test prioritization, selection,
+  minimization \cite{YooHarman}, and
+  throughput based on both composition and decomposition to allow
+  fine-grained analysis without the overhead of high startup costs.
+\item Improvements to test understanding and triage, including
+  avoidance of flaky tests and better fuzzer taming, based on
+  decomposition of tests.
+\end{enumerate}
+
+\mycomment{
+The following specific outcomes are expected (not an exhaustive list):
+{\bf (1)} Advances in the theory of software testing, in particular the
+  understanding of individual \emph{tests}.  {\bf (2)} Enhancements to the speed and effectiveness
+  of AFL and seeded KLEE.  {\bf (3)} Direct enhancements to the speed and effectiveness of C-Reduce and TSTL,
+  open source tools for testing.  C-Reduce in particular is already
+  extremely widely used in the compiler/language tool testing
+  community. {\bf (4)} Definitions and algorithms for a
+  set of test operations that contribute to practical goals of
+  critical importance for effective software testing:
+{\bf (4a)} Automatic generation of system tests from tests for components
+  (via composition).
+{\bf (4b)} Mixed-initiative testing where human tests enable better oracles
+  for automatically generated tests (via composition, decomposition,
+  and generalization).
+{\bf (4c)} Ability to more easily find unique faults in sets of failing
+  tests, better tests for debugging (via normalization).
+{\bf (4d)} Faster, more effective, and more reliable regression testing (via both test 
+  composition, decomposition, normalization, and generalization). 
+{\bf (4e)} Enhancements to test generation methods, based on using
+  decomposition and generalization to improve seeds to seeded test generation methods.}
+
+\mycomment{
+\begin{itemize}
+\item Advances in the theory of software testing, in particular the
+  understanding of individual \emph{tests}.
+\item A library of test operations that contribute to practical goals
+  of critical importance for effective software testing:
+\begin{itemize}
+\item Faster, more effective regression testing (via both test
+  composition, decomposition, normalization, and generalization).
+\item Automatic generation of system tests from tests for components
+  (via composition).
+\item Mixed-initiative testing where human tests enable better oracles
+  for automatically generated tests (via composition, decomposition,
+  and generalization).
+\item Ability to more easily find unique faults in sets of failing
+  tests, better tests for debugging (via normalization).
+\end{itemize}
+\item Enhancements to the speed and effectiveness of C-Reduce and TSTL,
+  open source tools for testing.  C-Reduce in particular is already
+  extremely widely used in the compiler/language tool testing community.
+\end{itemize}
+}
+
+
+% LocalWords:  subfield foundational minimization PIs startup runtime fuzzer
+% LocalWords:  parameterized HDD API refactoring GCC LLVM chipsets testbeds tis
+% LocalWords:  kcc autoincrement CompCert triaging bugfinding sanitizers pre
+% LocalWords:  fsanitize TSTL
+

@@ -1,0 +1,54 @@
+\section{Test Normalization}
+
+Normalization is the operation of rewriting a test (as always, subject
+to some causal constraint) into a restricted form.  The constraints on
+normalization are twofold:  a useful normalization must converge on a
+``simpler'' test in some sense, and the steps of normalization must
+have a low probability of drastically changing test behavior (inducing
+slippage).  The potential benefits of normalization are substantial.  First, it
+often rewrites many distinct failing tests for one fault into a single
+failing test, making it easy to find the set of distinct faults in a
+set of failing tests, a major problem in automated testing
+\cite{PLDI13}.   Second, normalized tests are often both shorter and
+include fewer features of the system under test, making them much
+easier to use for debugging.
+
+In preliminary experiments, we have produced a set of
+rewrite rules for normalization in TSTL.  For a large set of real test
+cases for real faults in the widely used SymPy Python symbolic math
+library, normalization was able to reduce the mean number of failing
+tests per fault from 12.5 tests to 3.15 tests.  The mean length and number of
+distinct API calls were reduced, compared to delta-debugging by over
+45\% and 35\%, respectively.  All results were statistically
+significant with $p < 0.005$.  Figure \ref{lengthandactions} shows the
+improvement in length and actions for the 39 SymPy faults discovered
+using TSTL.  The {\bf reduced} plots show length and actions
+statistics for tests for each fault, using only delta debugging.  The
+{\bf normalized} plots show the same values, when test normalization
+is also applied.  In addition to gains in test size and complexity
+that ease debugging, the figure also partly shows the gain for fault
+identification:  the ``boxes'' in this boxplot are typically single
+lines for normalization because normalization tends to result in a set
+of different tests exposing each fault being converted into a set of
+identical tests, hence tests having the same length and action count.
+
+\begin{figure}[t]
+\includegraphics[width=\columnwidth]{sympyd}
+\caption{Effects of normalization on SymPy tests.}
+\label{lengthandactions}
+\end{figure}
+
+Normalization is combined with an inverse-operation, generalization,
+that summarizes the set of similar tests that also satisfy some causal
+contraint.  This lets a user have the advantage of examining a
+simplified, terse test using only small input values, without any
+disadvantage due to misleading information about the criticalit of
+each aspect of the test.
+
+At this stage, however, normalization is only defined for TSTL tests,
+and has significant performance problems (it costs an order of
+magnitude more time than delta-debugging, in many cases).  As part of
+our effort to unify data and code-based tests, we propose to further
+generalize the notion of normalization and generalization, provide
+normalization facilities for key tests types such as C code (via
+C-Reduce), and improve the effectiveness and efficiency of normalization.

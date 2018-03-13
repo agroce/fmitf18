@@ -1,0 +1,54 @@
+\input{texstuff}
+\input{commands}
+
+\usepackage[multiple]{footmisc}
+\usepackage{framed}
+
+% solicitation:
+% http://www.nsf.gov/pubs/2011/nsf11557/nsf11557.htm
+
+\newcommand{\proptitle}{Tests as First-Class Entities}
+\newcommand{\fulltitle}{SHF:Small:Collaborative Research:\proptitle{}}
+
+\begin{document}
+
+\thispagestyle{empty}
+\pagestyle{plain}
+
+\input{summary}
+
+\newpage
+\setcounter{page}{1}
+\input{data-management-plan}
+
+\newpage
+\setcounter{page}{1}
+
+% GPG section on project descriptions
+% http://www.nsf.gov/pubs/policydocs/pappguide/nsf11001/gpg_2.jsp#IIC2d
+
+\begin{center}
+ {\Large\sf\textbf{Project Description ---
+ SHF: Small: \\ \proptitle{}}}
+\end{center}
+\input{intro}
+\input{composition}
+\input{decomp}
+%\input{prelim}
+%\input{approaches}
+%\input{problems}
+\input{related}
+\input{plan}
+\input{impact}
+\input{prior}
+
+\newpage
+\setcounter{page}{1}
+
+%\let\section=\oldsection
+{\raggedright 
+
+\bibliographystyle{plain}
+\bibliography{bibliography}%{icse12,pagariya,main,bibliography}
+
+\end{document}
