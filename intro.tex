@@ -54,6 +54,43 @@ completely proportional to the strength of the assumption.
 
 \subsection{Problem Statement and PI Qualifications}
 
+The simplest form of problem statement in this case may be in the form
+of an example.  Consider a networked system consisting of in-the-field
+power-constrained 
+nodes with sensors and actuators, in-the-field base stations that
+collect data from and issue commands to these nodes, and a (also
+possibly distributed) remote command-and-control center that handles
+permanent high-level data storage and analysis, coordination of activities across
+multiple field stations, and human oversight.  The overall system might be
+(as in our primary case study) an ecological science 
+platform performing experiments on plant migration and climate change
+impacts, or a NASA mission involving a swarm of robot explorers on
+another planet.  The details of system purpose are irrelevant; what
+matters is that there is a complex networked system with heterogenous
+connectivity and computational capabilities, where failure is
+extremely costly, in terms of either scientific outcomes (a stuck
+irrigation ruins a five-year experiment on plant survival) or simple
+dollar value (a multi-million dollar space mission is lost).
+
+When failure is sufficiently costly, verification efforts are (now
+and, we hope, increasingly in the future) proportionally intense.
+However, complex systems such as these are seldom developed by one
+team, in one place, with a coordinated approach to ensuring software
+correctness.  Instead, a variety of methods may be applied, even by
+teams all seeking the same goal of high reliability using
+state-of-the-art methods.  
+
+For example, two software modules may run on the same embedded system
+without memory protection.  One module may have been ``verified''
+using high-coverage, high-quality automatically generated tests.  The
+other module may have been verified using bounded model checking.  The
+tested module's tests are valid under the assumption that the other
+module does not change values it accesses, and
+\emph{this} assumption is guaranteed to hold.  The model-checked
+system, on the other hand, is correct under the same assumption: that
+the other module does not change its' memory contents; this assumption
+is only probabilistic.
+
 \subsection{Expected Outcomes}
 
 \section{Contributions to Formal Methods and the Field}
