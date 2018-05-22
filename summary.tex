@@ -3,89 +3,25 @@
 {\Large\sf\textbf{Project Summary\\\fulltitle{}}}
 \end{center}
 
-Most large or critical software projects devote a significant
-fraction of their effort to testing; tests are the primary products of
-this effort, and are ubiquitous in real-world development.  The
-research community has developed numerous techniques to automatically
-generate tests.  Unfortunately, once tests are created, whether by
-manual effort or automated techniques, they are among the most inert
-of computational objects.  At present, tests are stored, executed, and
-occasionally read by humans, but they are essentially treated as
-givens, amenable neither to modification (other than by hand),
-combination, separation, or amplification.  For example, while there
-is a large body of research studying how to minimize, prioritize, and
-select tests from a test suite, it is only in the last three years
-that work has finally appeared that modifies individual tests within
-the suite in the pursuit of these goals.  Tests are, at present, not
-first-class entities: they support only a few, limited, operations,
-lacking even such basic capabilities as composition and decomposition.
+Why composition of methods matters.
 
 \paragraph{Proposed Research}
 
-This project will investigate a practical theory of tests as entities
-that support operations such as composition, decomposition,
-normalization, and generalization. The two basic prongs of the
-research are: (1) how to represent tests so as to enable rich
-operations and (2) the development of algorithms for useful operations
-on tests.  This research will be grounded in a set of realistic
-problems that require a better understanding of tests as first-class
-entities.
-
-For example, a primary limitation of human-produced tests is that
-humans are not prolific test authors, nor are they typically
-imaginative enough to exercise the more obscure behaviors of a
-software system. However, automatically generated tests typically
-cannot check for complex properties of system output, because human
-understanding is needed to evaluate correctness in the absence of a
-complete formal specification.  A sophisticated ability to compose
-tests should enable the ``amplification'' (in terms of coverage and
-complexity) of hand-crafted tests with automatically generated
-additional behavior that preserves the effectiveness of the
-human-produced checks on correct behavior.  Effective test composition
-would also make it possible to automatically produce integration/system tests for
-systems, even heterogeneous ones, where the individual elements have
-effective tests but the interactions between the sub-systems are untested.
-
-The ability to automatically decompose tests into smaller tests, each
-checking correctness of a smaller aspect of system behavior, such that
-the set of all such tests retains the power of the original test has
-many potential benefits:  it can improve seeded test generation;
-reduce the high cost of regression testing by enabling a much finer-grained
-approach to selection, minimization, and prioritization of tests;
-reduce the chance of ``flaky'' test behavior; and support
-recently-proposed test-based approaches to self-adaptive software.
-Such tests are also likely to be easier to understand and
-use in debugging.
+What we'll do about it.
 
 
 \paragraph{Intellectual Merit}
 
-While tests are common objects of academic study, the very concept of
-a test is poorly defined.  The commonalities and differences between
-types of tests (unit tests or API-call sequences vs. file inputs, for
-example) are poorly understood.  The approach of this project is
-rooted in a novel conception of tests: tests can be understood as
-functions without inputs that return a test status indicating
-failure(s).  Additionally, tests typically feature a linear (but
-possibly hierarchical) notion of components and a set of causal
-properties that define the reason for a given test's existence, and
-control its output given the state of the program under test.  The
-idea of tests as programs of a restricted form should also enable the
-adaption of techniques from test analysis to more general program
-analysis, and vice versa.
+Why it's deep science and novel.
 
 \paragraph{Broader Impacts}
 
-Improvements in testing for software systems will have a direct impact
-on the quality of systems critical to the economy, national defense,
-scientific research in other fields, and the quality of life for
-information consumers.  Inadequate testing methods cost tens of
-billions of dollars each year, despite test budgets that often consume
-more than half of development costs.  More effective test generation
-and debugging is critical to addressing this problem.
+Improvements in verification and testing will obviously make sofware
+less inherently dangerous.  As someone said, ``software is eating the
+world... in the same sense that moths are eating your sweaters.''
 
 \paragraph{Key Words:}
-software testing, regression testing, test generation, debugging
+some good key words
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

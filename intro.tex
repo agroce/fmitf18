@@ -2,39 +2,40 @@
 
 \section{Introduction}
 
-Developing reliable networked systems whose final endpoints are
+Developing reliable complex systems under difficult engineering
+constraints, e.g., systems whose final endpoints are
 power-constrained, limited-bandwidth, and costly for humans to
-repair or even inspect is a key challenge over the next decade; while the
+repair or even inspect, is a key challenge over the next decade; while the
 widely discussed ``Internet of Things'' may be the first thing that
 comes to mind given this description, the problem is also central to long-term
 scientific research efforts, ranging from the climate change and
-plant migration research platform described in this proposal to
+plant migration research platform used as a testbed in this proposal to
 efforts to understand the surfaces of other planets.
 
 Formal methods have been used to verify aspects of such systems,
 including file systems, control elements, network protocols,
 \Fix{Let's find some cites and add things here}; however, the proofs
-of components are seldom, if ever assembled into a coherent,
-quantified and qualified understanding of the extent to which the
+of components are seldom, if ever, assembled into a coherent,
+quantified, or even fully \emph{qualified} understanding of the extent to which the
 whole system has been verified.  Because different components of many
 such systems are developed by disparate groups, sometimes
 collaborating internationally, even when formal methods are uniformly
 used, the emphasis is on the plural:  formal methods, not a single
 formal method.  The assumptions of one formal method/component are
 seldom formally yoked to the outputs of another formal method, with
-gaps in verification made clear.   Finally, some components are only
+gaps in verification made clear.   Finally, many components are only
 verified using high-confidence, automated, but non-proof-based
 approaches, including model checking with unsound abstractions, or
-(model-driven) automated test generation.  When these kinds of
+automated test generation.  When these kinds of
 ``semi-formal'' methods (relying on a formal model of inputs and
 system behavior, but not providing correctness proofs) are integrated
 into a design, there is almost never a characterization of the
 confidence thus provided.  The outcome is either not used at all in
-other methods, or is assumed to be as solid as a proof.
+other methods, or is assumed to be as solid as a full proof.
 
 In this proposal, we aim to address this weakness by designing
 ``glue'' formal methods for assembling the results of a set of
-hetergenous formal approaches into a single (if complex) result, able
+hetergenous formal and semi-formal approaches into a unified, coherent (if complex) result, able
 to identify both weaknesses and strengths in a system verification.
 E.g., if the proof of correctness of one component relies strongly on
 an assumption backed only by limited, manually constructed tests, this
@@ -42,13 +43,13 @@ can be distinguished from the case where the assumption is backed by a
 proof of correctness in a different formalism, which can be
 distinguished from the case where it is backed by
 both model-based and  symbolic-execution driven test generation, and
-a probabilistic or coverage-based estimate of completeness is
+a strong probabilistic, coverage-based, or mutation-based estimate of completeness is
 available.  Moreover, the proposed approach will be able to distinguish the case
-where an entire verification result is tainted by a non-proven
+where an entire verification result is tainted by a fundamental and non-proven
 assumption from the (common) case where different properties or
 behavioral paths have different degrees of reliabilty, ranging from
 complete independence from an uncertain assumption to confidence
-completely proportional to the strength of the assumption.
+completely proportional to the strength of an unchecked assumption.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
@@ -58,18 +59,17 @@ The simplest form of problem statement in this case may be in the form
 of an example.  Consider a networked system consisting of in-the-field
 power-constrained 
 nodes with sensors and actuators, in-the-field base stations that
-collect data from and issue commands to these nodes, and a (also
-possibly distributed) remote command-and-control center that handles
+collect data from and issue commands to these nodes, and a (possibly distributed) remote command-and-control center that handles
 permanent high-level data storage and analysis, coordination of activities across
 multiple field stations, and human oversight.  The overall system might be
-(as in our primary case study) an ecological science 
+(as in our primary case study and testbed platform) an ecological science 
 platform performing experiments on plant migration and climate change
 impacts, or a NASA mission involving a swarm of robot explorers on
 another planet.  The details of system purpose are irrelevant; what
 matters is that there is a complex networked system with heterogenous
 connectivity and computational capabilities, where failure is
 extremely costly, in terms of either scientific outcomes (a stuck
-irrigation ruins a five-year experiment on plant survival) or simple
+irrigation ruins a five-year experiment on plant survival) or simply
 dollar value (a multi-million dollar space mission is lost).
 
 When failure is sufficiently costly, verification efforts are (now
@@ -81,16 +81,53 @@ teams all seeking the same goal of high reliability using
 state-of-the-art methods.  
 
 For example, two software modules may run on the same embedded system
-without memory protection.  One module may have been ``verified''
-using high-coverage, high-quality automatically generated tests.  The
-other module may have been verified using bounded model checking.  The
-tested module's tests are valid under the assumption that the other
+without operating-system-level memory protection.  One module may have been ``verified''
+using high-coverage, high-quality, automatically generated tests.  The
+other module may have been verified using bounded model checking, with
+a depth that can be shown to exceed the diameter of system executions
+under valid inputs.  The tested module's testing results are valid under the assumption that the other
 module does not change values it accesses, and
-\emph{this} assumption is guaranteed to hold.  The model-checked
-system, on the other hand, is correct under the same assumption: that
-the other module does not change its' memory contents; this assumption
-is only probabilistic.
+\emph{this} assumption is guaranteed to hold, because the
+model-checked system is shown to never access memory in unsafe ways.  The model-checked
+component, on the other hand, is correct under the symmetric assumption: that
+the tested module does not change its' memory contents; this assumption
+is only partially guaranteed, for a limited set of executions.  This
+is a simple case, but even here the relationship can be used to guide
+engineering.  If we insert runtime guards on memory accesses, these
+only need be applied to the tested module, not the model-checked one, to guarantee memory
+boundary protection for the combined system.  However, if the
+model-checked system essentially relies on validity of outputs from the tested system for
+correctness, and these cannot be checked at runtime, the
+model-checking result itself is inherently only known to be as
+realiable as the tested system.  The measure of the strength of
+testing, whether it is code coverage, expected mean-time-to-failure
+under a realistic operational profile of inputs, or mutation score,
+propagates to the ``verified'' module as well.
+
+A basic aspect of the proposed work is understanding the implications
+of four kinds of assumption relationships:
+
+\begin{enumerate}
+\item First, there is the case where a formal method producing
+  complete proofs has an assumption that is discharged by another
+  formal method providing proofs.  In this case, the core effort is
+  providing translations between logics that allow us to understand
+  when these assumptions are fully discharged, and to propagate any
+  assumptions of the formal method used to guarantee the assumption to the
+  formal method making the assumption.
+
+\item Second, there is the case where a formal method producing
+  complete proofs has an assumption discharged by testing or another
+  incomplete method.
+
+\item Third, there is the case where testing relies on an assumption
+  from a formal method.
+
+\item Fourth, there is the case where testing relies on an assumption
+  validated by another testing approach.
+\end{enumerate}
+
+{\bf Everything past this point is from a previous proposal, ignore
+  it.  My prior NSF may be partially valid.}
 
 \subsection{Expected Outcomes}
-
-\section{Contributions to Formal Methods and the Field}
