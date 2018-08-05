@@ -23,3 +23,13 @@ Our basic proposal then is:
 - we will address this using a big enough set of tools, and important enough domain (low level C code) that it's an important step itself and generalizeable
 
 - but it's limited enough (C, these tools) that it's plausibly doable
+
+More concrete example:
+
+If I verify a function f with a loop in CBMC, for some property/test harness, I only get a guarantee conditional on the loop not unwinding more than k times.  Usually, k is a factor of some "problem size" constant defined (e.g., a sorting funciton sorts for arrays up to size N, and k = N * log_2(N) or something.
+
+This is a very good verification for up to k unwindings, but useless for larger sizes.  So the framework could aid the user in applying a method that would help with that specific problem.
+
+- For example, fuzzing with large N.  Fuzzers don't have a scalability issue in input size (unlike CBMC or symbolic execution tools), and in fact are often more effective with larger inputs, like all random testers (counterexamples are denser in the larger input space than in the smallest possible input space).  Fuzzing could also produce concrete states from which symbolic execution could check for "close" counterexamples, in some settings
+
+- For example, doing a real proof with a loop invariant for a property
