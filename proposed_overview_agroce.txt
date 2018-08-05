@@ -1,0 +1,25 @@
+Instead of making this about composing formal methods and testing, how about we formulate the problem as the equivalent of _ensemble methods_ in machine learning?
+
+The classic early paper is Tom Dietterich's 2000 discussion https://link.springer.com/chapter/10.1007/3-540-45014-9_1, and there's been a lot of work since then, even in the age of dominance of neural nets.
+
+That is, different methods or individual classifiers/tools can be effective for different aspects of a problem.  In ML, this is often fairly simple, since it 1) often uses a large set of classifiers of the _same kind_ trained the same way, with some stochastic influence such as subset of training data, and 2) even when they are diverse (stacking, blending), the inputs and outputs are generally the same.
+
+Our goal is similar:  no single anaysis tool (or, technique behind the tools) will catch all bugs or prove all provable properties of interest.  So we need multiple tools/techniques.  But these don't "talk" to each other, share a common set of assumptions or guarantees, or even common input language, etc.; but we want more than composition, in that we'll likely overlap the same tools on the same target code or property, due to different assumptions or guarantees provided, or scalability limitations.  To find bugs and guarantee absence of some kinds of bugs under certain assumptions, we need an _ensemble_ of verification and testing tools.  But right now using such an ensemble means a lot of duplication of effort, and there's no real communication between tools, other than via the unreliable route of a user's head.
+
+The target code we justify as the kind of low-level C code that is ubiquitous in IoT, cyberphysical systems, security library/crypto code, operating systems code, instrument and actuator code that enables modern automated science, basically the foundational system software that is most critical to make secure and reliable.
+
+The tools to apply are Frama-C, CBMC, and DeepState, all with different aims, targeting critical C code.  DeepState can serve as a kind of preliminary work, in that it lets the same front-end (unit test style formulation of the verification/testing problem) be applied to multiple types of back-ends, including symbolic analysis tools like Manticore and Angr and fuzzers like AFL and libFuzzer.  This is only a first stab at the problem (making a common way to express the problem, where counterexamples to a property are shared between methods), but I think it'll give a flavor of what we want here.  Frama-C is probably also "preliminary work" in that it's plugins style of analysis maybe has the same flavor in a way?  Frederic?
+
+Our basic proposal then is:
+
+- both detecting bugs and proving properties are essentially one "problem" from a user's POV
+
+- right now there is no "one method to rule them all" that works well in all situations; in fact, given a property of interest or piece of code, even experts are pretty terrible at guessing the right way to approach it
+
+- so we need to try lots of things
+
+- right now this is a huge manual effort, and results from one effort are often useless for the effort with another tool, even for the same code and property
+
+- we will address this using a big enough set of tools, and important enough domain (low level C code) that it's an important step itself and generalizeable
+
+- but it's limited enough (C, these tools) that it's plausibly doable
