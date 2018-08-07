@@ -1,0 +1,22 @@
+* spec
+** requires: validité + longeur positive
+     requires \valid(a+(0..length));
+     requires length > 0;
+** assigns \nothing;
+** post: résultat dans les bornes, pointe sur une valeur min
+    ensures 0<=\result<length;
+    ensures \forall integer i; 0<= i <length ==> a[\result]<=a[i]; 
+
+* preuve
+** invariants structurels
+       loop invariant 0<=i<=length;
+       loop invariant a[min_idx]==min;
+ - ne pas oublier de dire que min_idx est lui aussi dans les bornes      
+       loop invariant 0<=min_idx<length;
+** assigns
+       loop assigns min, min_idx, i;
+** invariant sémantique   
+   loop invariant \forall integer j; 0<=j<i ==> min<=a[j];
+
+** erreur dans le code:
+   il faut retourner min_idx et pas min

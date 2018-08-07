@@ -1,0 +1,83 @@
+%===========================================================================
+\section{Verification of absence of runtime errors using EVA}
+%===========================================================================
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}{Value Analysis Overview}
+
+\begin{center}
+  \large\red{Compute possible values of variables at each program point}
+\end{center}
+
+\begin{itemize}
+\item an automatic analysis	
+\smallskip	
+\item based on \blue{abstract interpretation}
+\smallskip
+\item produces a correct over-approximation
+\smallskip
+\item reports \blue{alarms} for potentially invalid operations
+\smallskip
+\item reports alarms for potentially invalid ACSL annotations
+\smallskip
+\item \blue{can prove the absence of runtime errors}
+\smallskip
+\item \blue{graphical interface}:
+  displays the domains of each variable % at each program point
+\end{itemize}
+
+\end{frame}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}{Domains of Value Analysis}
+%  \framesubtitle{Currently \gray{(Magnesium)}}
+
+\begin{itemize}
+	\item \blue{Historical domains}
+	\smallskip
+	\begin{itemize}
+		\item \blue{small sets} of integers, e.g. {$\{5, 18, 42\}$}
+		\smallskip
+		\item reduced product of \blue{intervals}: quick to compute, e.g. {$[1..41]$}
+		\smallskip
+		\item \blue{modulo}: pretty good for arrays of structures, e.g. {$[1..41],
+			1\%2$}
+		\smallskip
+		\item precise representation of \blue{pointers}, e.g. {\textit{32-bit aligned
+				offset from $\&t[0]$}}
+		\smallskip
+		\item \blue{initialization} information
+	\end{itemize}
+	\medskip
+	\item  \blue{Eva, Evolved Value Analysis}
+	\begin{itemize}
+		\item more \blue{generic and extensible} domains
+		\medskip
+		\item \blue{possible to add new, or combine domains}		
+	\end{itemize}
+	
+%	\smallskip
+%	\begin{itemize}
+%		\item excellent results on embedded code
+%		\smallskip
+%		\item possible usage in low-level C code
+%	\end{itemize}
+\end{itemize}
+
+\end{frame}
+
+% ------------------------------------
+
+\begin{frame}[fragile]{Example}
+  Run Eva:
+  \blue{\texttt{frama-c-gui div1.c -val -main=f}}\\[3mm]
+  \lstinputlisting[linerange=3-14]{examplesValue/div1.c}
+  \vspace{3mm}
+  \only<2>{\blue{Risk of division by 0} is detected, it is real.}  
+\end{frame}
+
+% ------------------------------------

@@ -1,0 +1,195 @@
+%\documentclass[pdf,xcolor={svgnames}]{beamer}
+\usepackage{etex}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{xspace}
+\usepackage{multicol}
+
+%\usepackage{pstricks-add}
+\usepackage{xcolor}
+\usepackage[normalem]{ulem}
+\usepackage{tikz}
+\usetikzlibrary{arrows}
+\usetikzlibrary{matrix}
+\usetikzlibrary{shapes}
+\usetikzlibrary{calc}
+\usetikzlibrary{fit}
+%\usetikzlibrary{shapes.callouts}
+\usetikzlibrary{decorations.text}
+\usetikzlibrary{positioning}
+\usepackage[final]{pdfpages}
+
+\graphicspath{{images/}{logos/}}
+
+\tikzset{markplace/.style=
+ {rectangle callout, fill=orange!40,
+  callout absolute pointer={#1},
+  at={#1}, above=1cm 
+ }}
+
+\useoutertheme{infolines}
+
+\newcommand{\gray}[1]{{\color{gray} #1}} 
+\newcommand{\orange}[1]{{\color{orange} #1}} 
+\newcommand{\green}[1]{{\color{green} #1}}
+\newcommand{\black}[1]{{\color{black} #1}}
+\newcommand{\red}[1]{{\color{red} #1}}
+\newcommand{\blue}[1]{{\color{blue} #1}}
+\newcommand{\magenta}[1]{{\color{magenta} #1}}
+\newcommand{\skyblue}[1]{{\color{sky} #1}}
+\newcommand{\mauve}[1]{{\color{lightbrown} #1}}
+\newcommand{\bluebox}[1]{\skyblue{\ovalbox{\black{#1} } }}
+
+%---- from Arvid 
+\definecolor{commentcolor}{rgb}{0,0,0.6}
+\definecolor{white}{rgb}{1,1,1}
+\input{ListingsHL}
+%---- end from Arvid 
+
+%----- from SB:
+\newcommand\combine{\ensuremath{\oplus}\xspace} 
+
+\xdefinecolor{monvert}{rgb}{0,.5, 0}
+\newcommand{\monbleu}[1]{\textcolor{blue}{#1}}
+\newcommand{\rouge}[1]{\textcolor{red}{#1}}
+\newcommand{\monvert}[1]{\textcolor{monvert}{#1}}
+\newcommand{\monorange}[1]{\textcolor{orange}{#1}}
+
+\newcommand{\mycomment}[1]{}
+\newcommand{\mycommentforpresentation}[1]{}
+\newcommand{\mycitation}[1]{\monvert{\footnotesize[#1]}}
+\newcommand{\mynote}[1]{\monvert{\footnotesize[#1]}}
+\newcommand{\myothernote}[1]{{\footnotesize[#1]}}
+\newcommand{\mycheckmark}{\monvert{\bf \Large  \checkmark}}
+\newcommand{\mybadmark}{\rouge{\bf \Large  $\times$}}
+\newcommand{\mymiddlemark}{\monorange{\bf \Large  $\bullet$}}
+\newcommand{\myalmostcheckmark}{\monorange{\bf \Large  \checkmark}}
+\newcommand{\mybullet}{\monbleu{$\bullet$}}
+
+\newenvironment{mypinkbox}[2]{\begin{beamerboxesrounded}[lower=block body alerted, upper=block title alerted,shadow=false]{#1}#2}{\end{beamerboxesrounded}}
+\newenvironment{myorangebox}[2]{\begin{beamerboxesrounded}[lower=block body, upper=block title,shadow=false]{#1}#2}{\end{beamerboxesrounded}}
+
+%\newcommand{\LC}{{\bf LC}}  % label coverage 
+\newcommand{\IC}{{\bf IC}}  % instruction coverage 
+\newcommand{\DC}{{\bf DC}}  % decision coverage
+\newcommand{\CC}{{\bf CC}}  % (simple) condition coverage
+\newcommand{\DCC}{{\bf DCC}}  % decision-condition coverage
+\newcommand{\MCC}{{\bf MCC}}  % multiple-condition coverage
+\newcommand{\GACC}{{\bf GACC}}  % restricted MCDC
+\newcommand{\FC}{{\bf FC}}  % function coverage
+\newcommand{\MCDC}{{\bf MCDC}}  % mcdc coverage
+\newcommand{\WM}{{\bf WM}}  % weak-mutation coverage
+\newcommand{\SM}{{\bf M}}  % strong-mutation coverage
+\newcommand{\IDC}{{\bf IDC}}  % input domain coverage
+ \newcommand{\RTEC}{{\bf RTE}}  % run-time errors
+
+%----- end from SB
+
+
+
+
+%----- from MD
+
+\newcommand{\InformalRef}[1]{{\footnotesize\color{green!60!black} [#1]}}
+\newcommand{\LAnnotate}{\textsc{LAnnotate}\xspace}
+\newcommand{\LUncov}{\textsc{LUncov}\xspace}
+\newcommand{\LGenTest}{\textsc{LGenTest}\xspace}
+\newcommand{\LReplay}{\textsc{LReplay}\xspace}
+\newcommand{\LTest}{\textsc{LTest}\xspace}
+\newcommand{\FramaC}{\textsc{Frama-C}\xspace}
+\newcommand{\FramaCLTest}{\textsc{Frama-C/LTest}\xspace}
+
+%----- end from MD
+
+
+%% \newcommand{\green}[1]{{\color{green} #1}}
+%% \newcommand{\black}[1]{{\color{black} #1}}
+%% \newcommand{\red}[1]{{\color{red} #1}}
+%% \newcommand{\blue}[1]{{\color{blue} #1}}
+%% \newcommand{\magenta}[1]{{\color{magenta} #1}}
+%% \newcommand{\skyblue}[1]{{\color{sky} #1}}
+%% \newcommand{\mauve}[1]{{\color{lightbrown} #1}}
+%% \newcommand{\bluebox}[1]{\skyblue{\ovalbox{\black{#1} } }}
+
+%% \newcommand<>\hcancel[2][black]{\setbox0=\hbox{$#2$}%
+%% \only#3{\rlap{\raisebox{.45\ht0}{\textcolor{#1}{\rule{\wd0}{1pt}}}}}#2}
+
+\definecolor{darkgreen}{rgb}{0, 0.5, 0}
+\definecolor{lightgreen}{rgb}{0.9,1,0.9}
+\definecolor{lightred}{rgb}{1,0.7,0.7}
+\definecolor{lightblue}{rgb}{0.8,0.8,1}
+\definecolor{darkblue}{rgb}{0.3,0.3,1}
+\definecolor{lightyellow}{rgb}{1,1,0.5}
+\definecolor{darkyellow}{rgb}{0.8,0.8,0}
+\definecolor{darkred}{rgb}{0.33,0.14,0.09}
+\definecolor{BlueList}{HTML}{0078B4}
+
+%% \def\good{\textcolor{darkgreen}{\ding{52}}}
+%% \def\bad{\textcolor{red}{\ding{56}}}
+
+%\setbeamerfont{smaller}{size=\footnotesize}
+%\setbeamerfont{script}{size=\Tiny,family=\ttfamily}
+%\setbeamerfont{smallscript}{size=\TINY,family=\ttfamily}
+%\setbeamercovered{transparent=20}
+
+%Virgile :
+
+\lstdefinelanguage{ACSL}{%
+  morekeywords={assert,assigns,assumes,axiom,axiomatic,behavior,behaviors,
+    boolean,breaks,complete,continues,data,decreases,disjoint,ensures,
+    exit_behavior,ghost,global,inductive,integer,invariant,lemma,logic,loop,
+    model,predicate,reads,real,requires,sizeof,strong,struct,terminates,type,%returns
+    union,variant,writes},
+%  otherkeywords={\\at,\\base_addr,\\block_length,\\false,\\fresh,\\from,
+%                 \\initialized,\\lambda,\\let,\\match,\\max,\\nothing,\\null,
+%                 \\numof,\\old,\\result,\\specified,\\strlen,\\sum,\\true,
+%                 \\valid,\\valid_range},
+  keywordsprefix={\\},
+  alsoletter={\\},
+  morecomment=[l]{//},
+  moredelim=*[s]{/*@}{*/}
+}
+
+\lstdefinelanguage{caveat}{%
+  morekeywords={invariant, params, remainder, variant}%
+}
+
+\lstdefinestyle{c}{language={[ANSI]C},%
+  alsolanguage=ACSL,%
+  commentstyle=\lp@comment,%
+  moredelim={*[l]{//}},%
+  %moredelim={*[s]{/*}{*/}},%
+  %moredelim={**[s]{/*@}{*/}},%
+  deletecomment={[s]{/*}{*/}},
+  moredelim={*[l]{//@}},%
+}
+
+% \lstset{
+%   escapeinside={\%*}{*)},
+%   language=C,
+%   style=c,
+%   basicstyle={\ttfamily},
+%   keywordstyle={\bfseries\color{blue}},
+%   showstringspaces=false,
+%   stringstyle={\rmfamily\color{gray}}
+% }
+
+\lstset{
+  escapeinside={\%*}{*)},
+  language=C,
+  style=c,
+  alsolanguage=ACSL,
+  basicstyle=\sffamily,
+  commentstyle=\slshape\color{commentcolor},  
+  keywordstyle={\bfseries\color{blue}},
+  showstringspaces=false,
+  stringstyle={\rmfamily\color{gray}},
+  frame=single,
+  columns=fullflexible
+}
+
+\lstdefinestyle{light}{%
+  basicstyle={\usebeamerfont{smaller}},%
+  keywordstyle={\color{gray}\ttfamily\footnotesize}%
+}

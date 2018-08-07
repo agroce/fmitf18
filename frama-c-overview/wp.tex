@@ -1,0 +1,153 @@
+% TODO NK
+
+%===========================================================================
+\section{Deductive verification using WP}
+%===========================================================================
+
+%------------------------------------
+\begin{frame}{Objectives of Deductive Verification}
+%\blue{Main objective:}\\[5mm]
+
+\blue{Rigorous, mathematical proof} of semantic properties of a program
+\begin{itemize}
+\item functional properties
+\item safety: 
+\begin{itemize}
+\item all memory accesses are valid, 
+\item no arithmetic overflow, 
+\item no division by zero, \dots
+\end{itemize}
+\item termination
+%\item \dots
+\end{itemize}
+\end{frame}
+
+%===========================================================================
+
+%------------------------------------
+\begin{frame}[fragile]{ACSL: ANSI/ISO C Specification Language}
+\blue{Presentation}\\ %[2mm]
+\begin{itemize}
+\item Based on the notion of \blue{contract}, like in Eiffel, JML
+\item Allows users to specify \blue{functional properties} of programs
+\item Allows \blue{communication} between various plugins
+\item \blue{Independent} from a particular analysis
+\item Manual at \url{http://frama-c.com/acsl}
+%\item ``ACSL by Example'' \gray{[Burghardt, Gerlach]}
+\end{itemize}
+\blue{Basic Components}\\ %[2mm]
+\begin{itemize}
+\item Typed first-order logic
+\item Pure C expressions
+\item C types + $\mathbb{Z}$ (integer) and $\mathbb{R}$ (real)
+\item Built-ins predicates and logic functions, particularly over
+pointers: 
+\lstinline'\valid(p)', \lstinline'\valid(p+0..2),'
+\lstinline'\separated(p+0..2,q+0..5),' \lstinline'\block_length(p)'
+\end{itemize}
+\end{frame}
+
+
+%------------------------------------
+\begin{frame}{WP plugin}
+\begin{itemize}
+\item \blue{Hoare-logic based plugin,} developed at CEA List
+\item Proof of \blue{semantic properties} of the program
+\item \blue{Modular verification} (function by function)
+\item \blue{Input:} a program and its specification in ACSL
+\item WP generates \blue{verification conditions} (VCs)
+\item Relies on \blue{Automatic Theorem Provers} to discharge the VCs
+\begin{itemize}\item  Alt-Ergo, Z3, CVC3, CVC4, Yices, Simplify \dots\end{itemize}
+\item WP manual at \blue{\url{http://frama-c.com/wp.html}}
+\item If all VCs are proved,  \blue{the program respects the given specification}
+\begin{itemize} 
+\item Does it mean that \blue{the program is correct?}
+\item<2->NO! \red{ If the specification is wrong, the program can be wrong!}
+\end{itemize}
+%% \item<2-> Limitations
+%% \begin{itemize} 
+%% \item<2-> Casts between pointers and integers
+%% \item<2-> Limited support for union type
+%% \item<2-> Aliasing requires some care
+%% \end{itemize}
+\end{itemize}
+\end{frame}
+
+%------------------------------------
+\begin{frame}{Contracts}
+\begin{itemize}
+\item \blue{Goal:} specification of imperative functions
+\item \blue{Approach:} give assertions (i.e. properties) about the functions
+\begin{itemize}
+\item \blue{Precondition} is supposed to be true on entry
+(ensured by the caller)
+\item \blue{Postcondition} must be true on exit
+(ensured by the function) %if it terminates)
+\end{itemize}
+\item Nothing is guaranteed when the precondition is not satisfied
+\item \blue{Termination} may be guaranteed or not \gray{(total or partial correctness)}
+\end{itemize}
+Primary role of contracts
+\begin{itemize}
+%\item Main input of the verification process
+\item Must reflect the informal specification
+\item Should not be modified just to suit the verification tasks
+\end{itemize}
+\end{frame}
+
+%------------------------------------
+\begin{frame}[fragile]{Example 1}
+Specify and prove the following program:\\[3mm]
+\lstinputlisting[language=C,alsolanguage=ACSL]{examplesWP/abs.c}
+\vspace{3mm}
+Try to prove with Frama-C/WP using the basic command\\[3mm]
+\begin{itemize} 
+\item \blue{\texttt{frama-c-gui -wp file.c}}
+\end{itemize}
+\end{frame}
+
+%------------------------------------
+\begin{frame}[fragile]{Example 1 (Continued)}
+Run WP:
+\blue{\texttt{frama-c-gui -wp 01-abs-1.c}}\\
+The basic proof succeeds for the following program:\\[3mm]
+\lstinputlisting{examplesWP/abs_1.c}
+\begin{itemize} 
+\item<1-> \red{The returned value is not always as expected.}
+%\item<1-> Hint: Try \blue{\texttt{frama-c-gui -wp -wp-rte file.c}} %SOLUTION
+\item<2-> \blue{For \lstinline'x=INT_MIN, -x' cannot be represented by an \lstinline'int' and overflows} %SOLUTION
+\item<2-> Example: on 32-bit, \lstinline'INT_MIN'$=-2^{31}$ while \lstinline'INT_MAX'$=2^{31}-1$%SOLUTION
+\item<2-> Run WP:
+\blue{\texttt{frama-c-gui -wp -wp-rte 01-abs-1.c}}\\
+\end{itemize} %SOLUTION
+\end{frame}
+
+%------------------------------------ 
+\begin{frame}[fragile]{Safety warnings: arithmetic overflows}
+\blue{Absence of arithmetic overflows} can be important to check 
+\begin{itemize}
+\item A sad example: crash of Ariane 5 in 1996
+\end{itemize}
+
+\vspace{5mm}
+WP can automatically check the \blue{absence of runtime errors}
+\begin{itemize}
+\item Use the command \blue{\texttt{frama-c-gui -wp -wp-rte file.c}}
+%\end{itemize}
+\item It generates VCs to ensure that runtime errors do not occur
+\begin{itemize}
+\item 
+in particular, arithmetic operations do not overflow
+\end{itemize}
+\item If not proved, an error may occur. 
+\end{itemize}
+\end{frame}
+
+%------------------------------------ %SOLUTION
+\begin{frame}[fragile]{Example 1 (Continued) - Solution}
+Run WP:
+\blue{\texttt{frama-c-gui -wp -wp-rte 01-abs-2.c}}\\
+This completely specified program is proved:\\[3mm]
+\lstinputlisting{examplesWP/abs_proved.c}
+\end{frame}
+

@@ -1,0 +1,50 @@
+* Specification
+** Introduction d'un prédicat Sorted
+   predicate sorted{L}(int* a, int length) =
+     \forall integer i,j; 0<=i<=j<length ==> a[i]<=a[j];
+
+** Requires: validité de a + sorted
+    requires \valid(a+(0..length-1));
+    requires sorted(a,length);
+
+    - ne pas oublier la longueur positive
+   requires length >=0;
+ 
+** assigns \nothing;
+** 2 comportement (exists and not_exist)
+  - ne pas oublier de borner l'index où on cherche key dans les assumes
+
+    behavior exists:
+    assumes \exists integer i; 0<=i<length && a[i] == key;
+    ensures 0<=\result<length && a[\result] == key;
+
+    behavior not_exists:
+    assumes \forall integer i; 0<=i<length ==> a[i] != key;
+    ensures \result == -1;
+
+    complete behaviors;
+    disjoint behaviors;
+
+    On peut insister sur le fait que les assumes sont complémentaires, et
+    qu'il faut bien écrire \exists x; P && Q d'un côté et \forall x; P ==> Q;
+    de l'autre (les gens ont parfois tendance à écrire \exists x; P ==> Q;)
+
+* Invariants de boucle
+** Structurels
+   loop invariant 0<=i<=j+1;
+   loop invariant j<length;
+ - NB: je me suis trompé en mettant une inégalité stricte entre i et j+1,
+   ça fait des trucs impossible à prouver (si besoin de montrer comment on
+   trouve les erreurs).
+ - ne pas oublier le loop assigns
+   loop assigns i,j;
+
+** Sémantiques
+     loop invariant \forall integer k; 0<=k<i ==> a[k] < key;
+     loop invariant \forall integer k; j<k<length ==> a[k] > key;
+** Variant
+    loop variant j-i;
+
+* Preuve
+** Erreur de débordement dans le calcul de mid. À remplacer par
+   i + (j-i)/2

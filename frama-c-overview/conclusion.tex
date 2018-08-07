@@ -1,0 +1,164 @@
+% TODO JS
+
+%===========================================================================
+\section{Conclusion}
+%===========================================================================
+
+%------------------------------------
+\begin{frame}{Outline}
+\small
+\tableofcontents[currentsection,subsectionstyle=show/shaded/hide]
+\end{frame}
+%------------------------------------
+\begin{frame}{Conclusion}
+
+  We have presented how to:
+  \smallskip
+  \begin{itemize}
+  \item verify the absence of runtime errors with \blue{Eva}
+    \smallskip
+  \item formally specify functional properties with \blue{ACSL}
+    \smallskip
+  \item prove a programs respects its specification with \blue{WP}
+    \smallskip
+  \item verify annotations at runtime or detect runtime errors with \blue{E-ACSL}
+  \end{itemize}
+
+  \begin{center}
+    {\large \red{All of these and much more inside Frama-C}}
+    \medskip
+  \end{center}
+
+  May be used for:
+  \begin{itemize}
+  \smallskip
+  \item \blue{teaching}
+  \smallskip
+  \item \blue{academic} prototyping
+  \smallskip
+  \item \blue{industrial} applications
+  \end{itemize}
+
+  \begin{center}
+    {\large \red{http://frama-c.com}}
+  \end{center}
+
+\end{frame}
+
+%% %------------------------------------
+%% \begin{frame}{Some Academic Collaborations}
+
+%%   \begin{itemize}
+%%   \item \red{Inria} \& \red{Fraunhofer}: \blue{specification language} and
+%%     program \blue{proofs} \gray{and much more...}
+%%   \item \red{Nasa}: proving \blue{floating point} programs
+%%   \item \red{Onera} \& \red{ENSIIE}: combining formal verifications and
+%%     testing/monitoring
+%%   \end{itemize}
+
+%% \end{frame}
+
+%------------------------------------
+\begin{frame}{Further reading}
+  User manuals:
+  \begin{itemize}
+  \item user manuals for Frama-C and its different analyzers, on the website:\\
+    {\small \url{http://frama-c.com}}   
+  \end{itemize}
+\medskip
+  About the use of WP:
+  \begin{itemize}
+  \item Introduction to C program proof using Frama-C and its WP plugin\\
+    Allan Blanchard\\
+    {\small \url{https://allan-blanchard.fr/publis/frama-c-wp-tutorial-en.pdf}}
+  \item ACSL by Example\\
+    Jochen Burghardt, Jens Gerlach\\
+    {\small \url{https://github.com/fraunhoferfokus/acsl-by-example}}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Further reading}
+  Tutorial papers:
+  \begin{small}
+  \begin{itemize}
+  \item %this tutorial:\\
+  A.~Blanchard, N.~Kosmatov, and F.~Loulergue. A Lesson on Verification of IoT Software with Frama-C (HPCS 2018)
+  	
+  \item on deductive verification:\\
+    N.~Kosmatov, V.~Prevosto, and J.~Signoles. A lesson on proof of programs with Frama-C (TAP 2013)
+  \item on runtime verification:
+    \begin{itemize}
+    \item N.~Kosmatov and J.~Signoles. A lesson on runtime assertion checking with Frama-C (RV 2013)
+    \item N.~Kosmatov and J.~Signoles. Runtime assertion checking and its combinations with static and dynamic analyses (TAP 2014)
+    \end{itemize}
+  \item on test generation:\\
+    N.~Kosmatov, N.~Williams, B.~Botella, M.~Roger, and O.~Chebaro. A lesson on  structural testing with PathCrawler-online.com (TAP 2012)
+  \item on analysis combinations:\\
+    N.~Kosmatov and J.~Signoles. Frama-C, A collaborative framework for C code verification: Tutorial synopsis (RV 2016)
+  \end{itemize}
+  \end{small}
+\end{frame}
+
+\begin{frame}{Further reading}
+  More details on the verification of Contiki:
+  \begin{small}
+    \begin{itemize}
+    \item on the MEMB module:\\
+      F.~Mangano, S.~Duquennoy, and N.~Kosmatov. A memory allocation module of
+      Contiki formally verified with {Frama-C}. A case study (CRiSIS 2016)
+    \item on the AES-CCM* module:\\
+      A.~Peyrard, S.~Duquennoy, N.~Kosmatov, and S.~Raza. Towards formal
+      verification of Contiki: Analysis of the AES–CCM* modules with Frama-C
+      (RED-IoT 2017)
+    \item on the LIST module:
+      \begin{itemize}
+      \item A.~Blanchard, N.~Kosmatov, and F.~Loulergue. Ghosts for
+        lists: A critical module of contiki verified in Frama-C (NFM
+        2018)
+      \item F.~Loulergue, A.~Blanchard, and N.~Kosmatov. Ghosts for
+        lists: from axiomatic to executable specifications (TAP 2018)
+      \end{itemize}
+    \end{itemize}
+  \end{small}
+\end{frame}
+
+  
+%\begin{frame}{Some Industrial Applications}
+%
+%  \begin{itemize}
+%  \item \red{Airbus} \& \red{Atos}: \blue{WP} and \blue{home-made} plug-ins for
+%    avionic applications
+%  \item \red{EDF} \& \red{Areva}: \blue{Value} for nuclear applications
+%  \item \red{IRSN}: \blue{WP} for nuclear applications
+%  \item \red{Bureau Veritas}: normative activities and \blue{Frama-Clang}
+%  \item \red{TrustInSoft} and their customers: \blue{Value} and
+%    \blue{Frama-Clang} for security applications
+%  \item \red{Dassault Aviation}: \blue{home-made} plug-ins + \blue{Value} +
+%    \blue{Slicing} + \blue{E-ACSL} for security counter-measures
+%  \item \red{Mitsubishi Electric}: experimenting \blue{PathCrawler}
+%  \item ...
+%  \end{itemize}
+%
+%  \begin{center}
+%    \hfill
+%    \includegraphics[scale=0.15]{logos/airbus.jpg}
+%    \hfill
+%    \includegraphics[scale=0.15]{logos/atos.png}
+%    \hfill
+%    \includegraphics[scale=0.15]{logos/edf.png}
+%    \hfill
+%    \includegraphics[scale=0.15]{logos/areva.png}
+%    \hfill
+%    \includegraphics[scale=0.15]{logos/irsn.png}\\
+%    \hfill
+%    \includegraphics[scale=0.15]{logos/bv.png}
+%    \hfill
+%    \includegraphics[scale=0.15]{logos/trustinsoft.png}
+%    \hfill
+%    \includegraphics[scale=0.15]{logos/dassault.png}
+%    \hfill
+%    \includegraphics[scale=0.15]{logos/mitsu.png}
+%    \hfill
+%  \end{center}
+%
+%\end{frame}

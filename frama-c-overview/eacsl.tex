@@ -1,0 +1,70 @@
+\newcommand{\bs}{\ensuremath{\backslash}}
+
+%===========================================================================
+\section{Runtime Verification using E-ACSL}
+%===========================================================================
+
+%------------------------------------
+
+\begin{frame}{Objectives of E-ACSL}
+
+  \begin{itemize}
+  \item Frama-C initially designed as a static analysis platform
+  \item Extended with plugins for \blue{dynamic analysis}
+  \item E-ACSL: runtime assertion checking tool
+    \begin{itemize}
+  	\item detect runtime errors 
+  	\item detect annotation failures
+  	\item treat a concrete program run (i.e. concrete inputs)
+  \end{itemize}  
+  \end{itemize}
+  
+\end{frame}
+
+% -------------------------------------------------------------------
+
+\begin{frame}[fragile]{E-ACSL plugin at a Glance}
+
+%  \vspace{-5mm}
+  \begin{center}
+    \Large{\red{\url{http://frama-c.com/eacsl.html}}}
+  \end{center}
+
+\begin{itemize}
+\item convert \blue{E-ACSL annotations into C code}
+\item implemented as a \blue{Frama-C} plugin
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}
+  \node (init) at (0,0) [anchor=north]
+{\small \begin{lstlisting}[escapechar=|,frame=none]
+int div(int x, int y) {
+  |\red{/*@ assert y-1 != 0; */}|
+  return x / (y-1);
+}
+\end{lstlisting} };
+
+  \node (eacsl) at (6,0) [anchor=north]
+{\small \begin{lstlisting}[escapechar=|,frame=none]
+int div(int x, int y) {
+  |\red{/*@ assert y-1 != 0; */}|
+  |\blue{e\_acsl\_assert(y-1 != 0);}|
+  return x / (y-1);
+}
+\end{lstlisting} };
+
+\draw [->,color=red] (init) to node [auto] { \footnotesize{E-ACSL} }
+(eacsl); 
+\end{tikzpicture}
+\end{center}
+\pause
+\begin{itemize}
+%% \item \red{\texttt{\bs{}result}} requires to introduce
+%%   extra-variables
+%% \item \red{\texttt{\bs{}at(x,L)}} requires to introduce code at L
+\item the general translation is \blue{more complex than it may look}
+\end{itemize}
+
+\end{frame}
+
