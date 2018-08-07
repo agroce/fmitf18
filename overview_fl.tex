@@ -1,0 +1,85 @@
+\documentclass[11pt]{article}
+% -----------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage{fullpage}
+\usepackage[numbers]{natbib}
+\usepackage{doi}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{times}
+\usepackage[T1]{fontenc}
+% -----------------------------------
+\title{Principles and tools for the analysis of IoT communication
+  protocols and their implementations applied to the\\Southwest
+  Experimental Garden Array}
+% -----------------------------------
+\begin{document}
+\maketitle
+
+It is notoriously difficult to design correct and secure communication
+protocols. One of the most famous example is the Needham Schroeder
+Public Key protocol~\cite{NS1978:CACM}: it took 18 years to discover a
+flaw in this protocol~\cite{LOW1996:TACAS}, and it was done using
+formal methods. The {\em implementation} of a correct protocol also
+matters as the Heartbleed vulnerability in the OpenSSL implementation
+shows.
+
+In the case of Heartbleed, the problem was a C runtime error: an
+access to an invalid memory region, and it was due to an implicit
+assumption on the input of a function that was actually false.
+Combination of static and dynamic analyses can detect such
+vulnerabilities~\cite{KKP2015:HVC} because they are not due to complex
+interactions related to the protocol.
+
+The aim of this proposal is to:
+\begin{itemize}[itemsep=0pt]
+\item study the principles of the analysis of communication protocols and
+  their implementations,
+\item implement the theoretical principles in two sets of tools,
+\item use these tools to statically and dynamically analyze a network
+  of devices deployed in the Southwest Experimental Garden
+  Array~\cite{SEGA}, a common garden instrument for examining climate
+  change, genetic and environmental factors affecting plants and
+  associated communities.
+\end{itemize}
+
+\paragraph{Principles} Assuming a communication protocol is described
+as timed automata~\cite{AD1994:TCS} or probabilistics timed automata,
+that are satisfy some timed temporal logic
+formulas~\cite{BLM2017:LNCS}, and it is implemented as a set of
+imperative programs, the two main questions are:
+\begin{itemize}[itemsep=0pt]
+\item Given the timed automata and a set of programs supposed to
+  implement them, how to annotate the programs to be able to check
+  they correctly implement the protocol, or to find bugs?
+\item Given a set of programs, possibly with annotations, supposed to
+  implement a protocol, how to generate the protocol as timed automata
+  or probabilistic timed automata amendable to formal verification
+  with respect to timed temporal logic formulas?
+\end{itemize}
+In this first part, we will consider a toy imperative language with
+usual control structures, unbounded integers, addresses, and
+non-recursive procedures.
+
+\paragraph{Tools} In this part we will consider the C programming
+language, Frama-C~\cite{KKP2015:FAC} and DeepState~\cite{DEEPSTATE}
+for the analysis of programs, and
+Uppaal~\footnote{\url{http://www.uppaal.org}} and
+Prism~\cite{KNP2011:CAV}) for the analysis of protocols. We main
+questions are:
+\begin{itemize}[itemsep=0pt]
+\item How to handle the C constructs that are not in the toy language?
+\item How to extend the specification languages of Frama-C and
+  DeepState?
+\item How to handle intra-program parallelism?
+\item How to automate the methods as much as possible?
+\item \ldots
+\end{itemize}
+
+\paragraph{Application} SEGA
+
+% ------------------------------------
+\bibliography{bibliography_fl}
+%\bibliography{references}
+\bibliographystyle{plainnat}
+\end{document}
