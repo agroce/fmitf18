@@ -1,0 +1,117 @@
+\documentclass[11pt]{article}
+% ----------------------------------------
+\usepackage[numbers]{natbib}
+\usepackage[in]{fullpage}
+\usepackage{doi}
+\usepackage{xspace}
+\usepackage{hyperref}
+% ----------------------------------------
+\newcommand{\framac}{\textsc{Frama-C}\xspace}
+\newcommand{\pathcrawler}{\textsc{Path\-Craw\-ler}\xspace}
+\newcommand{\acsl}{\textsc{Acsl}\xspace}
+\newcommand{\eacsl}{\textsc{E-Acsl}\xspace}
+\newcommand{\eacsltoc}{\textsc{E-Acsl2c}\xspace}
+\newcommand{\Wp}{\textsc{Wp}\xspace}
+\newcommand{\Dafny}{\textsc{Dafny}\xspace}
+\newcommand{\Coq}{\textsc{Coq}\xspace}
+\newcommand{\Value}{\textsc{Va\-lue}\xspace}
+\newcommand{\Eva}{\textsc{Eva}\xspace}
+\newcommand{\eva}{\Eva}
+% ----------------------------------------
+\begin{document}
+
+While the correctness of an implementation with respect to a formal
+functional specification provides a very strong form of guarantee, it
+can be very costly to achieve, and is currently mostly reserved to
+domains where it is required by regulations or offers a competitive
+advantage. In practice, it is very useful to rely on a combination of
+formal methods to achieve an appropriate degree of guarantee:
+automatic static analysis to ensure the absence of runtime errors,
+deductive verification to prove functional correctness, and runtime
+verification for parts of code that cannot be (or are not yet) proved
+using deductive verification, or parts of code that contains warnings
+detected by static analysis that need further analysis to determine
+whether the warning is an error or not.
+
+This project will use \framac{}\footnote{See
+  https://frama-c.com}~\cite{KKP2015:FAC} is a source code analysis
+platform that aims at conducting verification of industrial-size
+programs written in ISO C99 source code. \framac{} fully supports
+combinations of different approaches, by providing its users with a
+collection of plugins for static and dynamic analyses of safety- and
+security-critical software. Moreover, collaborative verification
+across cooperating plugins is enabled by their integration on top of a
+shared kernel, and their compliance to a common specification
+language: \acsl~\cite{ACSL}.
+
+\acsl, for ANSI/ISO C Specification Language, is based on the notion
+of contract like in JML. It allows users to specify functional
+properties of programs through pre/post-condition, and provides
+different ways to define predicates and logic functions.  Some useful
+built-in predicates and logic functions are provided, to handle for
+example pointer validity or separation.
+
+\emph{Value analysis} is a program analysis technique that computes a
+set of possible values for every program variable at each program
+point.  It is based on the \emph{abstract interpretation} technique
+proposed by Cousot and Cousot in the 1970's~\cite{cousot77}.  Its main
+idea is to compute an abstract view of values of variables in the form
+of \emph{abstract domains}. For example, a usual abstract view for a
+number value is an interval.
+
+Value analysis can be very useful to detect potential runtime errors
+or prove their absence.  Typical examples include invalid pointers,
+invalid array indices, arithmetic overflows or division by zero.  It
+can also help to prove other properties for which domain-based
+reasoning can be efficient.
+
+Since the \framac Aluminium release, \framac offers a new value
+analysis plugin \Eva (Evolved Value Analysis)~\cite{eva-manual}.  It
+implements value analysis as a generic extendable analysis
+parameterized by cooperating abstract domains.  Different, highly
+optimized domains are used to represent integers, floating-point
+numbers and pointers.  \Eva is strongly integrated into the \framac
+ecosystem and offers a basis for many other derived plugins that reuse
+the results of \Eva (see~\cite{KKP2015:FAC}).
+
+\Wp is a \emph{deductive verification} plugin provided with
+\framac. It is based on weakest precondition calculus. Given a C
+program annotated in \acsl, \Wp generates the corresponding proof
+obligations that can be discharged by SMT solvers or with interactive
+proof.  A combination of automatic and interactive proofs often offers
+a good trade-off for a complete proof. Indeed, some properties can
+only be defined recursively, and in this case, SMT solvers often
+become inefficient, trying to unroll them. By using inductive or
+axiomatically defined functions, we can prevent this behavior but
+reasoning about them still requires induction, a task that SMT solvers
+are not good at. Thus, the last step is generally to state lemmas that
+can be directly instantiated by SMT solvers.
+
+\framac was initially designed as a static analysis platform, but it
+was later extended with plugins for dynamic analysis. One of these
+plugins is \eacsl, a runtime verification tool.
+
+\eacsl supports runtime assertion
+checking~\cite{CR2006:SEN}. Assertions are very convenient for
+detecting errors and providing information about their locations.  It
+is the case even when such an error does not result in a failure
+during execution. 
+
+In \framac, \eacsl is both the name of the assertion language and the
+name of a plugin that generates C code to check these assertions at
+runtime. For the sake of clarity from now on we will use \eacsl only
+for the language, and \eacsltoc for the plugin.
+
+\eacsl is a subset of \acsl: the specifications written in this subset
+can therefore be used both by \Wp and \eacsltoc. \Wp tries to prove
+the correctness of these assertions {\em statically} using automated
+provers, while \eacsltoc is used to translate these assertions into C
+code that can then be executed. In this case the assertions are
+checked {\em dynamically}.
+
+\bibliographystyle{plainnat}
+\bibliography{bibliography_fl}
+
+\end{document}
+
+
